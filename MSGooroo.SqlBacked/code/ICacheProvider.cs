@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MSGooroo.TableBacked {
+namespace MSGooroo.SqlBacked {
 	public interface ICacheProvider {
 
 		void Set<T>(string cacheKey, T value);

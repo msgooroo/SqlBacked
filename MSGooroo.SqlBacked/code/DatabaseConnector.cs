@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MSGooroo.TableBacked {
+namespace MSGooroo.SqlBacked {
 	public static class DatabaseConnector {
 
 

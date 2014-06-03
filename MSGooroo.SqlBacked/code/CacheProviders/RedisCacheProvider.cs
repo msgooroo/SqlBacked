@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 using StackExchange.Redis;
 
 
-namespace MSGooroo.TableBacked {
+namespace MSGooroo.SqlBacked {
 	public class RedisCacheProvider : ICacheProvider {
 
 		private IDatabase _db;

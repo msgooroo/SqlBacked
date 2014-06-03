@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MSGooroo.TableBacked {
+namespace MSGooroo.SqlBacked {
 	public interface ITableBacked {
 		void BindReader(DbDataReader reader);
 		void BindCommand(DbCommand command);
