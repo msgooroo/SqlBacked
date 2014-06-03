@@ -19,6 +19,7 @@ namespace PocoGenerator {
 		public PocoColumn PrimaryKey;
 		public List<PocoColumn> Columns;
 
+		public string DatabaseName;
 
 		public SqlBackedTable(string connectionString, string namespacePrefix, string schemaName, string tableName, bool includeCache) {
 
@@ -31,6 +32,7 @@ namespace PocoGenerator {
 			Columns = new List<PocoColumn>();
 
 			using (var cn = new SqlConnection(connectionString)) {
+				DatabaseName = cn.Database;
 				cn.Open();
 
 				List<string> schemas = new List<string>();
@@ -198,13 +200,16 @@ namespace PocoGenerator {
 			}
 
 			string code = template
-				.Replace("[{TYPE_NAME}]", TableName)
+				.Replace("[{TIME_STAMP}]", DateTime.Now.ToString())
+				.Replace("[{DATABASE_NAME}]", DatabaseName)
+				.Replace("[{TABLE_NAME}]", TableName)
+				.Replace("[{SCHEMA_NAME}]", SchemaName)
 				.Replace("[{NAMESPACE}]", namespaceName)
 				.Replace("[{PROPERTIES}]", properties)
 
-				.Replace("[{TABLE_NAME}]", string.Format("\t\tpublic string TableName {{ get {{ return \"{0}\"; }} }}", TableName))
-				.Replace("[{SCHEMA_NAME}]", string.Format("\t\tpublic string SchemaName {{ get {{ return \"{0}\"; }} }}", SchemaName))
-				.Replace("[{PRIMARY_KEY}]", primaryKeyCol)
+				.Replace("[{TABLE_NAME_PROPERTY}]", string.Format("\t\tpublic string TableName {{ get {{ return \"{0}\"; }} }}", TableName))
+				.Replace("[{SCHEMA_NAME_PROPERTY}]", string.Format("\t\tpublic string SchemaName {{ get {{ return \"{0}\"; }} }}", SchemaName))
+				.Replace("[{PRIMARY_KEY_PROPERTY}]", primaryKeyCol)
 
 				.Replace("[{INSERT_SQL}]", GetInsertSql())
 				.Replace("[{UPDATE_SQL}]", GetUpdateSql())
