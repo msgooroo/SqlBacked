@@ -9,28 +9,24 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace PocoGenerator {
-	public enum CacheType {
-		None,
-		AzureCache,
-		Redis
-	}
-
 	public class SqlBackedTable {
 		public string SchemaName;
 		public string TableName;
 		public string NamespacePrefix;
 
-		public CacheType Cache;
+		public bool IncludeCache;
 
 		public PocoColumn PrimaryKey;
 		public List<PocoColumn> Columns;
 
 
-		public SqlBackedTable(string connectionString, string namespacePrefix, string schemaName, string tableName, CacheType cacheType) {
+		public SqlBackedTable(string connectionString, string namespacePrefix, string schemaName, string tableName, bool includeCache) {
+
+
 			SchemaName = schemaName;
 			TableName = tableName;
 			NamespacePrefix = namespacePrefix;
-			Cache = cacheType;
+			IncludeCache = includeCache;
 
 			Columns = new List<PocoColumn>();
 
@@ -38,7 +34,8 @@ namespace PocoGenerator {
 				cn.Open();
 
 				List<string> schemas = new List<string>();
-				using (var cmd = new SqlCommand(File.ReadAllText(@"..\..\sql\columns.sql"), cn)) {
+				string path = Program.MapPath(@"..\sql\columns.sql");
+				using (var cmd = new SqlCommand(File.ReadAllText(path), cn)) {
 					cmd.Parameters.AddWithValue("@TABLE_SCHEMA", schemaName);
 					cmd.Parameters.AddWithValue("@TABLE_NAME", tableName);
 					using (SqlDataReader reader = cmd.ExecuteReader()) {
@@ -59,7 +56,8 @@ namespace PocoGenerator {
 			if (PrimaryKey == null) {
 				return "\t\tpublic string UpdateSql  { get { throw new InvalidOperationException(\"This object has no Primary Key set in the Database\");} }";
 			}
-			var template = File.ReadAllText("../../templates/UpdateSql.cs");
+			string path = Program.MapPath(@"..\templates\UpdateSql.cs");
+			var template = File.ReadAllText(path);
 
 
 			string updateSql = string.Join(", ", Columns
@@ -76,7 +74,8 @@ namespace PocoGenerator {
 
 		}
 		public string GetInsertSql() {
-			var template = File.ReadAllText("../../templates/InsertSql.cs");
+			string path = Program.MapPath(@"..\templates\InsertSql.cs");
+			var template = File.ReadAllText(path);
 
 
 			string columnList = string.Join(", ", Columns
@@ -101,7 +100,8 @@ namespace PocoGenerator {
 
 		}
 		public string GetBindCommand() {
-			var template = File.ReadAllText("../../templates/BindCommand.cs");
+			string path = Program.MapPath(@"..\templates\BindCommand.cs");
+			var template = File.ReadAllText(path);
 
 
 			string columnList = string.Join(", ", Columns
@@ -125,7 +125,8 @@ namespace PocoGenerator {
 		}
 
 		public string GetGetMethods() {
-			var template = File.ReadAllText("../../templates/GetDbMethods.cs");
+			string path = Program.MapPath(@"..\templates\GetDbMethods.cs");
+			var template = File.ReadAllText(path);
 
 			string code = template
 				.Replace("[{TYPE_NAME}]", TableName);
@@ -133,7 +134,8 @@ namespace PocoGenerator {
 			return code;
 		}
 		public string GetGetCachedMethods() {
-			var template = File.ReadAllText("../../templates/GetCachedMethods.cs");
+			string path = Program.MapPath(@"..\templates\GetCachedMethods.cs");
+			var template = File.ReadAllText(path);
 
 			string code = template
 				.Replace("[{TYPE_NAME}]", TableName);
@@ -142,7 +144,8 @@ namespace PocoGenerator {
 		}
 
 		public string GetBindReader() {
-			var template = File.ReadAllText("../../templates/BindReader.cs");
+			string path = Program.MapPath(@"..\templates\BindReader.cs");
+			var template = File.ReadAllText(path);
 
 			var bindings = Columns
 				.Select(x => x.BindReaderValueToObjectCode)
@@ -163,7 +166,9 @@ namespace PocoGenerator {
 		}
 
 		public string GetClass() {
-			var template = File.ReadAllText("../../templates/Class.cs");
+			string path = Program.MapPath(@"..\templates\Class.cs");
+			var template = File.ReadAllText(path);
+
 			var namespaceName = NamespacePrefix;
 			if (SchemaName != "dbo") {
 				namespaceName += "." + SchemaName;
@@ -171,11 +176,11 @@ namespace PocoGenerator {
 
 			var cachingMethods = "";
 
-			if (Cache != CacheType.None && PrimaryKey == null) {
+			if (this.IncludeCache && PrimaryKey == null) {
 				Console.WriteLine(string.Format("Warning: Unable to use caching for table [{0}] as it does not have an INTEGER identity column", TableName));
 			}
 
-			if (Cache != CacheType.None && PrimaryKey != null) {
+			if (this.IncludeCache && PrimaryKey != null) {
 
 				cachingMethods = GetGetCachedMethods();
 			}
