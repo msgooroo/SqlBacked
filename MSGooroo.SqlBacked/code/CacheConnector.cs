@@ -273,12 +273,13 @@ namespace MSGooroo.SqlBacked {
 			if (ps != null) {
 				sqlParams = string.Join("|", ps.GetType()
 					.GetProperties()
-					.Select(x => x.Name + "=" + x.GetValue(ps).ToString())
-					);
+					.Select(x => x.Name + "=" + (x.GetValue(ps) ?? "null").ToString())
+				);
 			}
 			return string.Format("{0}|sql|{1}|{2}", obj.TableName, sql.GetHashCode(), sqlParams);
 		}
 
+	
 
 	}
 }

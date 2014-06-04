@@ -8,6 +8,26 @@ using System.Threading.Tasks;
 namespace MSGooroo.SqlBacked {
 	public static class DatabaseConnector {
 
+		/// <summary>
+		/// Executes an SQL Command using the supplied connection and sql query.
+		/// The object, "ps" will be reflected such that its properties are bound
+		/// as named parameters to the query.
+		/// </summary>
+		/// <param name="cn"></param>
+		/// <param name="sql"></param>
+		/// <param name="ps"></param>
+		/// <returns></returns>
+		public static int ExecuteSql(this DbConnection cn, string sql, object ps){
+			using (var cmd = cn.CreateCommand()) {
+				cmd.CommandText = sql;
+				if (ps != null) {
+					foreach (var p in ps.GetType().GetProperties()) {
+						cmd.Parameters.Add(GetParameter(cmd, "@" + p.Name, p.GetValue(ps)));
+					}
+				}
+				return cmd.ExecuteNonQuery();
+			}
+		}
 
 		public static IEnumerable<T> Get<T>(DbConnection cn, string condition, object param) where T : ITableBacked, new() {
 			T first = new T();
@@ -45,6 +65,9 @@ namespace MSGooroo.SqlBacked {
 				}
 			}
 		}
+
+
+
 		public static T Get<T>(DbConnection cn, int primaryKey) where T : ITableBacked, new() {
 			T first = new T();
 			if (first.PrimaryKeyColumn == null) {
@@ -78,7 +101,7 @@ namespace MSGooroo.SqlBacked {
 			if (obj.PrimaryKeyColumn == null) {
 				throw new InvalidOperationException("Using Update requires that the ITableBacked has a Primary Key defined");
 			}
-
+			
 			using (var cmd = cn.CreateCommand()) {
 				cmd.CommandText = obj.UpdateSql;
 				cmd.Transaction = txn;
