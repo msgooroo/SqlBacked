@@ -27,7 +27,7 @@ namespace MSGooroo.SqlBacked {
 			if (items != null) {
 				return items;
 			} else {
-				return GetSqlUncached<T>(cn, cache, sql, ps);
+				return GetSqlAndRefreshCached<T>(cn, cache, sql, ps);
 			}
 		}
 
@@ -48,7 +48,7 @@ namespace MSGooroo.SqlBacked {
 			if (items != null) {
 				return items;
 			} else {
-				return GetDbSetCached<T>(cn, cache, condition, param);
+				return GetAndRefreshCached<T>(cn, cache, condition, param);
 			}
 		}
 
@@ -68,7 +68,7 @@ namespace MSGooroo.SqlBacked {
 			if (item != null) {
 				return item;
 			}
-			return GetDbSetCached<T>(cn, cache, primaryKey);
+			return GetAndRefreshCached<T>(cn, cache, primaryKey);
 		}
 
 		/// <summary>
@@ -98,7 +98,7 @@ namespace MSGooroo.SqlBacked {
 					for (var i = 0; i < items.Count; i++) {
 						if (items[i] == null) {
 							int primaryKey = references[i];
-							items[i] = GetDbSetCached<T>(cn, cache, primaryKey);
+							items[i] = GetAndRefreshCached<T>(cn, cache, primaryKey);
 						}
 					}
 					// If its still null after going to the database, then its probably been
@@ -118,7 +118,7 @@ namespace MSGooroo.SqlBacked {
 		/// <param name="cache"></param>
 		/// <param name="primaryKey"></param>
 		/// <returns></returns>
-		public static T GetDbSetCached<T>(DbConnection cn, ICacheProvider cache, int primaryKey) where T : ITableBacked, new() {
+		public static T GetAndRefreshCached<T>(DbConnection cn, ICacheProvider cache, int primaryKey) where T : ITableBacked, new() {
 			T first = new T();
 			var cacheKey = first.SingleCacheKey(primaryKey);
 			//var db = Get(cn, primaryKey);
@@ -139,7 +139,7 @@ namespace MSGooroo.SqlBacked {
 		/// <param name="condition"></param>
 		/// <param name="param"></param>
 		/// <returns></returns>
-		public static IEnumerable<T> GetDbSetCached<T>(DbConnection cn, ICacheProvider cache, string condition, object param) where T : ITableBacked, new() {
+		public static IEnumerable<T> GetAndRefreshCached<T>(DbConnection cn, ICacheProvider cache, string condition, object param) where T : ITableBacked, new() {
 			T first = new T();
 			string cacheKey = first.CacheKey(condition, param);
 			var items = DatabaseConnector.Get<T>(cn, condition, param).ToList();
@@ -159,7 +159,7 @@ namespace MSGooroo.SqlBacked {
 		/// <param name="condition"></param>
 		/// <param name="param"></param>
 		/// <returns></returns>
-		public static IEnumerable<T> GetSqlUncached<T>(DbConnection cn, ICacheProvider cache, string sql, object ps) where T : ITableBacked, new() {
+		public static IEnumerable<T> GetSqlAndRefreshCached<T>(DbConnection cn, ICacheProvider cache, string sql, object ps) where T : ITableBacked, new() {
 			T first = new T();
 			string cacheKey = first.SqlCacheKey(sql, ps);
 
