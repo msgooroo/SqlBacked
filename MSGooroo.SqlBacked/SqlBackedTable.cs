@@ -70,6 +70,7 @@ namespace PocoGenerator {
 			string code = template
 				.Replace("[{TYPE_NAME}]", TableName)
 				.Replace("[{SCHEMA_NAME}]", SchemaName)
+				.Replace("[{PKCOLUMN}]", PrimaryKey.ColumnName)
 				.Replace("[{UPDATE_SQL}]", updateSql);
 
 			return code;

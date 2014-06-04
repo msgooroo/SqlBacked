@@ -8,6 +8,16 @@ using System.Threading.Tasks;
 namespace MSGooroo.SqlBacked {
 	public static class CacheConnector {
 
+		/// <summary>
+		/// Gets a list of items using the SQL supplied, trying the cache first, then the database.
+		/// The object passed in as "ps" will be reflected on, and its properties used as parameters.
+		/// </summary>
+		/// <typeparam name="T"></typeparam>
+		/// <param name="cn"></param>
+		/// <param name="cache"></param>
+		/// <param name="condition"></param>
+		/// <param name="param">An object whose properties will be used as named parameters</param>
+		/// <returns></returns>
 
 		public static IEnumerable<T> GetSqlCached<T>(DbConnection cn, ICacheProvider cache, string sql, object ps) where T : ITableBacked, new() {
 			T first = new T();
@@ -18,9 +28,7 @@ namespace MSGooroo.SqlBacked {
 				return items;
 			} else {
 				return GetSqlUncached<T>(cn, cache, sql, ps);
-
 			}
-			return null;
 		}
 
 		/// <summary>

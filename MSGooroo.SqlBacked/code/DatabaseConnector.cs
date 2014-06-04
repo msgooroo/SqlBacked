@@ -72,7 +72,7 @@ namespace MSGooroo.SqlBacked {
 		}
 
 		public static int Insert<T>(this T obj, DbConnection cn) where T : ITableBacked, new() {
-			return Insert<T>(obj, cn);
+			return Insert<T>(obj, cn, null);
 		}
 		public static int Update<T>(this T obj, DbConnection cn, DbTransaction txn) where T : ITableBacked, new() {
 			if (obj.PrimaryKeyColumn == null) {
