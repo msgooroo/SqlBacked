@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 
 namespace MSGooroo.SqlBacked {
 	public static class DatabaseConnector {
@@ -17,7 +18,7 @@ namespace MSGooroo.SqlBacked {
 		/// <param name="sql"></param>
 		/// <param name="ps"></param>
 		/// <returns></returns>
-		public static int ExecuteSql(this DbConnection cn, string sql, object ps){
+		public static int ExecuteSql(this DbConnection cn, string sql, object ps) {
 			using (var cmd = cn.CreateCommand()) {
 				cmd.CommandText = sql;
 				if (ps != null) {
@@ -72,10 +73,10 @@ namespace MSGooroo.SqlBacked {
 			T first = new T();
 			if (first.PrimaryKeyColumn == null) {
 				throw new InvalidOperationException("Using Get with a Primary Key requires that the ITableBacked has a Primary Key defined");
-			
+
 			}
 			return Get<T>(cn, first.PrimaryKeyColumn + "=", primaryKey).FirstOrDefault();
-			
+
 		}
 
 
@@ -101,7 +102,7 @@ namespace MSGooroo.SqlBacked {
 			if (obj.PrimaryKeyColumn == null) {
 				throw new InvalidOperationException("Using Update requires that the ITableBacked has a Primary Key defined");
 			}
-			
+
 			using (var cmd = cn.CreateCommand()) {
 				cmd.CommandText = obj.UpdateSql;
 				cmd.Transaction = txn;
@@ -146,6 +147,34 @@ namespace MSGooroo.SqlBacked {
 			p.ParameterName = name;
 			p.Value = val == null ? (object)DBNull.Value : val;
 			return p;
+		}
+
+
+		public static string DumpJsonRows(this DbConnection cn, string sql, object ps) {
+			using (var cmd = cn.CreateCommand()) {
+				cmd.CommandText = sql;
+				if (ps != null) {
+					foreach (var p in ps.GetType().GetProperties()) {
+						cmd.Parameters.Add(GetParameter(cmd, "@" + p.Name, p.GetValue(ps)));
+					}
+				}
+				using (var reader = cmd.ExecuteReader()) {
+					// Field names
+					List<string> columnNames =
+						Enumerable.Range(0, reader.FieldCount)
+							.Select(x => reader.GetName(x))
+							.ToList();
+					List<Dictionary<string, string>> data = new List<Dictionary<string, string>>();
+					while (reader.Read()) {
+						Dictionary<string, string> rowData = new Dictionary<string, string>();
+						for (var i = 0; i < reader.FieldCount; i++) {
+							rowData[columnNames[i]] = reader[i].ToString();
+						}
+						data.Add(rowData);
+					}
+					return JsonConvert.SerializeObject(new { ColumnNames = columnNames, Rows = data });
+				}
+			}
 		}
 
 

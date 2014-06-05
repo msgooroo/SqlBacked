@@ -288,6 +288,9 @@ namespace MSGooroo.SqlBacked {
 		/// <param name="ps"></param>
 		/// <returns></returns>
 		public static string SqlCacheKey<T>(this T obj, string sql, object ps) where T : ITableBacked, new() {
+			return SqlCacheKey(obj.TableName, sql, ps);
+		}
+		public static string SqlCacheKey(string type, string sql, object ps){
 			string sqlParams = "none";
 			if (ps != null) {
 				sqlParams = string.Join("|", ps.GetType()
@@ -295,10 +298,40 @@ namespace MSGooroo.SqlBacked {
 					.Select(x => x.Name + "=" + (x.GetValue(ps) ?? "null").ToString())
 				);
 			}
-			return string.Format("{0}|sql|{1}|{2}", obj.TableName, sql.GetHashCode(), sqlParams);
+			return string.Format("{0}|sql|{1}|{2}", type, sql.GetHashCode(), sqlParams);
 		}
 
 
+
+		public static string DumpJsonRowsCached(this DbConnection cn, ICacheProvider cache, string sql, object ps) {
+			var cacheKey = SqlCacheKey("custom_json", sql, ps);
+
+			var cached = cache.Get<string>(cacheKey);
+			if (cached != null) {
+				return cached;
+			}
+
+			string json = DatabaseConnector.DumpJsonRows(cn, sql, ps);
+
+			Task.Run(() => {
+				cache.Set<string>(cacheKey, json);
+			});
+
+			return json;
+
+		}
+		public static string DumpJsonRowsAndRefreshCached(this DbConnection cn, ICacheProvider cache, string sql, object ps) {
+			var cacheKey = SqlCacheKey("custom_json", sql, ps);
+
+			string json = DatabaseConnector.DumpJsonRows(cn, sql, ps);
+
+			Task.Run(() => {
+				cache.Set<string>(cacheKey, json);
+			});
+
+			return json;
+
+		}
 
 	}
 }
