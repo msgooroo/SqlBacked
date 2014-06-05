@@ -19,7 +19,7 @@ namespace MSGooroo.SqlBacked {
 		/// <param name="param">An object whose properties will be used as named parameters</param>
 		/// <returns></returns>
 
-		public static IEnumerable<T> GetSqlCached<T>(DbConnection cn, ICacheProvider cache, string sql, object ps) where T : ITableBacked, new() {
+		public static IEnumerable<T> GetSqlCached<T>(DbConnection cn, ICacheProvider cache, string sql, object ps) where T : class, ITableBacked, new() {
 			T first = new T();
 
 			string cacheKey = first.SqlCacheKey(sql, ps);
@@ -40,7 +40,7 @@ namespace MSGooroo.SqlBacked {
 		/// <param name="condition"></param>
 		/// <param name="param"></param>
 		/// <returns></returns>
-		public static IEnumerable<T> GetCached<T>(DbConnection cn, ICacheProvider cache, string condition, object param) where T : ITableBacked, new() {
+		public static IEnumerable<T> GetCached<T>(DbConnection cn, ICacheProvider cache, string condition, object param) where T : class, ITableBacked, new() {
 			T first = new T();
 
 			string cacheKey = first.CacheKey(condition, param);
@@ -60,7 +60,7 @@ namespace MSGooroo.SqlBacked {
 		/// <param name="cache"></param>
 		/// <param name="primaryKey"></param>
 		/// <returns></returns>
-		public static T GetCached<T>(DbConnection cn, ICacheProvider cache, int primaryKey) where T : ITableBacked, new() {
+		public static T GetCached<T>(DbConnection cn, ICacheProvider cache, int primaryKey) where T : class, ITableBacked, new() {
 			T first = new T();
 
 			var cacheKey = first.SingleCacheKey(primaryKey);
@@ -81,7 +81,7 @@ namespace MSGooroo.SqlBacked {
 		/// <param name="cache">The cache to query</param>
 		/// <param name="cacheKey">The key for the list we are querying</param>
 		/// <returns></returns>
-		private static IEnumerable<T> GetCachedOnly<T>(DbConnection cn, ICacheProvider cache, string cacheKey) where T : ITableBacked, new() {
+		private static IEnumerable<T> GetCachedOnly<T>(DbConnection cn, ICacheProvider cache, string cacheKey) where T : class, ITableBacked, new() {
 			T first = new T();
 
 			// If there is no primary key, then anything in the cache will
@@ -126,7 +126,7 @@ namespace MSGooroo.SqlBacked {
 		/// <param name="cache"></param>
 		/// <param name="primaryKey"></param>
 		/// <returns></returns>
-		public static T GetAndRefreshCached<T>(DbConnection cn, ICacheProvider cache, int primaryKey) where T : ITableBacked, new() {
+		public static T GetAndRefreshCached<T>(DbConnection cn, ICacheProvider cache, int primaryKey) where T : class, ITableBacked, new() {
 			T first = new T();
 			var cacheKey = first.SingleCacheKey(primaryKey);
 			//var db = Get(cn, primaryKey);
@@ -147,7 +147,7 @@ namespace MSGooroo.SqlBacked {
 		/// <param name="condition"></param>
 		/// <param name="param"></param>
 		/// <returns></returns>
-		public static IEnumerable<T> GetAndRefreshCached<T>(DbConnection cn, ICacheProvider cache, string condition, object param) where T : ITableBacked, new() {
+		public static IEnumerable<T> GetAndRefreshCached<T>(DbConnection cn, ICacheProvider cache, string condition, object param) where T : class, ITableBacked, new() {
 			T first = new T();
 			string cacheKey = first.CacheKey(condition, param);
 			var items = DatabaseConnector.Get<T>(cn, condition, param).ToList();
@@ -167,7 +167,7 @@ namespace MSGooroo.SqlBacked {
 		/// <param name="condition"></param>
 		/// <param name="param"></param>
 		/// <returns></returns>
-		public static IEnumerable<T> GetSqlAndRefreshCached<T>(DbConnection cn, ICacheProvider cache, string sql, object ps) where T : ITableBacked, new() {
+		public static IEnumerable<T> GetSqlAndRefreshCached<T>(DbConnection cn, ICacheProvider cache, string sql, object ps) where T : class, ITableBacked, new() {
 			T first = new T();
 			string cacheKey = first.SqlCacheKey(sql, ps);
 
@@ -189,7 +189,7 @@ namespace MSGooroo.SqlBacked {
 		/// <param name="cacheKey">The cache key for the list of keys</param>
 		/// <param name="items">The items we want to save in the cache</param>
 		/// <returns></returns>
-		public static void CacheItems<T>(ICacheProvider cache, string cacheKey, List<T> items) where T : ITableBacked, new() {
+		public static void CacheItems<T>(ICacheProvider cache, string cacheKey, List<T> items) where T : class, ITableBacked, new() {
 
 			Task.Run(() => {
 				T first = new T();
@@ -221,7 +221,7 @@ namespace MSGooroo.SqlBacked {
 		/// <typeparam name="T"></typeparam>
 		/// <param name="obj"></param>
 		/// <param name="cache"></param>
-		public static void Uncache<T>(this T obj, ICacheProvider cache) where T : ITableBacked, new() {
+		public static void Uncache<T>(this T obj, ICacheProvider cache) where T : class, ITableBacked, new() {
 			string s = obj.SingleCacheKey<T>();
 			cache.Remove(s);
 		}
@@ -233,7 +233,7 @@ namespace MSGooroo.SqlBacked {
 		/// <param name="obj"></param>
 		/// <param name="cn"></param>
 		/// <param name="cache"></param>
-		public static void DeleteCached<T>(this T obj, DbConnection cn, ICacheProvider cache) where T : ITableBacked, new() {
+		public static void DeleteCached<T>(this T obj, DbConnection cn, ICacheProvider cache) where T : class, ITableBacked, new() {
 			obj.Delete(cn);
 			obj.Uncache(cache);
 		}
@@ -245,7 +245,7 @@ namespace MSGooroo.SqlBacked {
 		/// <param name="obj"></param>
 		/// <param name="cn"></param>
 		/// <param name="cache"></param>
-		public static void UpdateCached<T>(this T obj, DbConnection cn, ICacheProvider cache) where T : ITableBacked, new() {
+		public static void UpdateCached<T>(this T obj, DbConnection cn, ICacheProvider cache) where T : class, ITableBacked, new() {
 			obj.Update(cn);
 			cache.Set<T>(obj.SingleCacheKey(), obj);
 		}
@@ -256,7 +256,7 @@ namespace MSGooroo.SqlBacked {
 		///		Gets the cache key for a single value
 		/// </summary>
 		/// <param name="primaryKey">The primary key of the database table</param>
-		public static string SingleCacheKey<T>(this T obj, int primaryKey) where T : ITableBacked, new() {
+		public static string SingleCacheKey<T>(this T obj, int primaryKey) where T : class, ITableBacked, new() {
 			return string.Format("{0}|one|{1}", obj.TableName, primaryKey);
 		}
 
@@ -264,7 +264,7 @@ namespace MSGooroo.SqlBacked {
 		///		Gets the cache key for a single value
 		/// </summary>
 		/// <param name="primaryKey">The primary key of the database table</param>
-		public static string SingleCacheKey<T>(this T obj) where T : ITableBacked, new() {
+		public static string SingleCacheKey<T>(this T obj) where T : class, ITableBacked, new() {
 			return string.Format("{0}|one|{1}", obj.TableName, obj.PrimaryKey);
 		}
 
@@ -274,7 +274,7 @@ namespace MSGooroo.SqlBacked {
 		/// </summary>
 		/// <param name="condition">The SQL text following the WHERE</param>
 		/// <param name="param">A value to be added to the WHERE Condition</param>
-		public static string CacheKey<T>(this T obj, string condition, object param) where T : ITableBacked, new() {
+		public static string CacheKey<T>(this T obj, string condition, object param) where T : class, ITableBacked, new() {
 			return string.Format("{0}|list|{1}", obj.TableName, param);
 		}
 
@@ -287,7 +287,7 @@ namespace MSGooroo.SqlBacked {
 		/// <param name="sql"></param>
 		/// <param name="ps"></param>
 		/// <returns></returns>
-		public static string SqlCacheKey<T>(this T obj, string sql, object ps) where T : ITableBacked, new() {
+		public static string SqlCacheKey<T>(this T obj, string sql, object ps) where T : class, ITableBacked, new() {
 			return SqlCacheKey(obj.TableName, sql, ps);
 		}
 		public static string SqlCacheKey(string type, string sql, object ps){

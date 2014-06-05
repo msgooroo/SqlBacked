@@ -40,8 +40,11 @@ namespace PocoGenerator {
 			CacheType type = CacheType.None;
 			if (args[2] == "redis") {
 				type = CacheType.Redis;
+			} else if (args[2] == "azure") {
+				type = CacheType.AzureCache;
+			
 			} else if (args[2] != "none") {
-				Console.WriteLine("Unknown / Invalid Cache Type, please use one of 'none', 'redis'.\n");
+				Console.WriteLine("Unknown / Invalid Cache Type, please use one of ['none', 'redis', 'azure'].\n");
 				PrintUsage();
 				return;
 			}
@@ -106,6 +109,9 @@ namespace PocoGenerator {
 					File.Copy(MapPath(@"..\Code\CacheProviders\RedisCacheProvider.cs"), path + @"\RedisCacheProvider.cs", true);
 				}
 
+				if (cacheType == CacheType.AzureCache) {
+					File.Copy(MapPath(@"..\Code\CacheProviders\AzureCacheProvider.cs"), path + @"\AzureCacheProvider.cs", true);
+				}
 
 			} catch (Exception ex) {
 				Console.WriteLine("An exception occurred");

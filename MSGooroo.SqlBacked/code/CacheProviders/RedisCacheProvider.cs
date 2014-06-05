@@ -1,4 +1,6 @@
-﻿using System;
+﻿
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -22,13 +24,13 @@ namespace MSGooroo.SqlBacked {
 
 		#region ICacheProvider Members
 
-		public void Set<T>(string cacheKey, T value) {
+		public void Set<T>(string cacheKey, T value) where T : class {
 			byte[] buffer = Serialize(value);
 			_db.StringSet(cacheKey, buffer);
 
 		}
 
-		public T Get<T>(string cacheKey) {
+		public T Get<T>(string cacheKey) where T : class {
 			byte[] buffer = _db.StringGet(cacheKey);
 			return Deserialize<T>(buffer);
 		}
@@ -39,7 +41,7 @@ namespace MSGooroo.SqlBacked {
 
 		}
 
-		public IEnumerable<T> GetMany<T>(IEnumerable<string> cacheKeys) {
+		public IEnumerable<T> GetMany<T>(IEnumerable<string> cacheKeys) where T : class {
 			var values = _db.StringGet(
 					cacheKeys
 						.Select(x => (RedisKey)x)
