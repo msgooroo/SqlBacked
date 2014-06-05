@@ -57,6 +57,7 @@ namespace [{NAMESPACE}] {
 
 [{GET_CACHE_METHODS}]
 
+[{GET_CACHE_SQL_METHODS}]
 
 #endregion
 	}

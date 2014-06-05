@@ -145,6 +145,15 @@ namespace PocoGenerator {
 
 			return code;
 		}
+		public string GetGetCachedSqlMethods() {
+			string path = Program.MapPath(@"..\templates\GetCachedSqlMethods.cs");
+			var template = File.ReadAllText(path);
+
+			string code = template
+				.Replace("[{TYPE_NAME}]", TableName);
+
+			return code;
+		}
 
 		public string GetBindReader() {
 			string path = Program.MapPath(@"..\templates\BindReader.cs");
@@ -197,7 +206,7 @@ namespace PocoGenerator {
 				primaryKeyCol = string.Format("\t\tpublic string PrimaryKeyColumn {{ get {{ return \"{0}\"; }} }}", PrimaryKey.ColumnName);
 			} else {
 				properties += "\t\tpublic int PrimaryKey { get { throw new InvalidOperationException(\"This object has no Primary Key set in the Database\");} }\r\n";
-				primaryKeyCol = "\t\tpublic string PrimaryKeyColumn { get { throw new InvalidOperationException(\"This object has no Primary Key set in the Database\");} }\r\n";
+				primaryKeyCol = "\t\tpublic string PrimaryKeyColumn { get { return null;} }\r\n";
 			}
 
 			string code = template
@@ -219,10 +228,9 @@ namespace PocoGenerator {
 				.Replace("[{BIND_COMMAND}]", GetBindCommand())
 
 				.Replace("[{GET_METHODS}]", GetGetMethods())
-				.Replace("[{GET_CACHE_METHODS}]", cachingMethods);
+				.Replace("[{GET_CACHE_METHODS}]", cachingMethods)
+				.Replace("[{GET_CACHE_SQL_METHODS}]", GetGetCachedSqlMethods());
 
-			if (PrimaryKey == null) {
-			}
 			return code;
 
 		}

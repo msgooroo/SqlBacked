@@ -42,7 +42,7 @@ namespace MSGooroo.SqlBacked {
 		/// <returns></returns>
 		public static IEnumerable<T> GetCached<T>(DbConnection cn, ICacheProvider cache, string condition, object param) where T : ITableBacked, new() {
 			T first = new T();
- 
+
 			string cacheKey = first.CacheKey(condition, param);
 			var items = GetCachedOnly<T>(cn, cache, cacheKey);
 			if (items != null) {
@@ -84,6 +84,14 @@ namespace MSGooroo.SqlBacked {
 		private static IEnumerable<T> GetCachedOnly<T>(DbConnection cn, ICacheProvider cache, string cacheKey) where T : ITableBacked, new() {
 			T first = new T();
 
+			// If there is no primary key, then anything in the cache will
+			// just be a list of items we can return directly (rather than
+			// lists of ids - since there are no ids).
+			if (first.PrimaryKeyColumn == null) {
+				var cached = cache.Get<List<T>>(cacheKey);
+				return cached;
+			}
+
 			var references = cache.Get<List<int>>(cacheKey);
 			if (references != null) {
 				if (references.Count == 0) {
@@ -103,7 +111,7 @@ namespace MSGooroo.SqlBacked {
 					}
 					// If its still null after going to the database, then its probably been
 					// deleted, so exclude the null entry from the list.
-					return items.Where(x=>x!=null);
+					return items.Where(x => x != null);
 				}
 			}
 			return null;
@@ -165,6 +173,7 @@ namespace MSGooroo.SqlBacked {
 
 			var items = DatabaseConnector.GetSql<T>(cn, sql, ps).ToList();
 
+
 			CacheItems(cache, cacheKey, items);
 
 			return items;
@@ -183,6 +192,16 @@ namespace MSGooroo.SqlBacked {
 		public static void CacheItems<T>(ICacheProvider cache, string cacheKey, List<T> items) where T : ITableBacked, new() {
 
 			Task.Run(() => {
+				T first = new T();
+				if (first.PrimaryKeyColumn == null) {
+					// Cache the whole object in one go, since we dont have
+					// primary keys to use for cache keys for individual items.
+					cache.Set(cacheKey, items);
+
+					return;
+
+				}
+
 				// Update the individual items
 				foreach (var item in items) {
 					cache.Set(item.SingleCacheKey(item.PrimaryKey), item);
@@ -279,7 +298,7 @@ namespace MSGooroo.SqlBacked {
 			return string.Format("{0}|sql|{1}|{2}", obj.TableName, sql.GetHashCode(), sqlParams);
 		}
 
-	
+
 
 	}
 }
