@@ -89,7 +89,7 @@ namespace PocoGenerator {
 				.Where(x => !x.IsIdentity)
 				.Select(x => "@" + x.ColumnName).ToArray());
 
-			string paramBindings = string.Join("\r\n", Columns
+			string paramBindings = string.Join("\r\n\t\t\t", Columns
 				.Where(x => !x.IsIdentity)
 				.Select(x => x.BindParameterToCommand).ToArray()
 			);
