@@ -108,15 +108,15 @@ namespace PocoGenerator {
 
 
 			string columnList = string.Join(", ", Columns
-				.Where(x => !x.IsPrimaryKey)
+				.Where(x => !x.IsIdentity)
 				.Select(x => x.ColumnName).ToArray());
 
 			string valueList = string.Join(", ", Columns
-				.Where(x => !x.IsPrimaryKey)
+				.Where(x => !x.IsIdentity)
 				.Select(x => "@" + x.ColumnName).ToArray());
 
 			string paramBindings = string.Join("\r\n", Columns
-				.Where(x => !x.IsPrimaryKey)
+				.Where(x => !x.IsIdentity)
 				.Select(x => x.BindParameterToCommand).ToArray()
 			);
 
