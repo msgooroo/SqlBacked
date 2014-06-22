@@ -21,6 +21,7 @@ namespace MSGooroo.SqlBacked {
 		/// <returns></returns>
 
 		public static IEnumerable<T> GetSqlCached<T>(DbConnection cn, ICacheProvider cache, string sql, object ps) where T : class, ITableBacked, new() {
+
 			T first = new T();
 
 			string cacheKey = first.SqlCacheKey(sql, ps);
@@ -65,9 +66,12 @@ namespace MSGooroo.SqlBacked {
 			T first = new T();
 
 			var cacheKey = first.SingleCacheKey(primaryKey);
-			var item = cache.Get<T>(cacheKey);
-			if (item != null) {
-				return item;
+
+			if (cache != null) {
+				var item = cache.Get<T>(cacheKey);
+				if (item != null) {
+					return item;
+				}
 			}
 			return GetAndRefreshCached<T>(cn, cache, primaryKey);
 		}
@@ -83,6 +87,10 @@ namespace MSGooroo.SqlBacked {
 		/// <param name="cacheKey">The key for the list we are querying</param>
 		/// <returns></returns>
 		private static IEnumerable<T> GetCachedOnly<T>(DbConnection cn, ICacheProvider cache, string cacheKey) where T : class, ITableBacked, new() {
+			if (cache == null) {
+				return null;
+			}
+
 			T first = new T();
 
 			// If there is no primary key, then anything in the cache will
@@ -130,12 +138,13 @@ namespace MSGooroo.SqlBacked {
 		public static T GetAndRefreshCached<T>(DbConnection cn, ICacheProvider cache, int primaryKey) where T : class, ITableBacked, new() {
 			T first = new T();
 			var cacheKey = first.SingleCacheKey(primaryKey);
-			//var db = Get(cn, primaryKey);
-			var db = DatabaseConnector.Get<T>(cn, primaryKey);
 
-			Task.Run(() => {
-				cache.Set(cacheKey, db);
-			});
+			var db = DatabaseConnector.Get<T>(cn, primaryKey);
+			if (cache != null) {
+				Task.Run(() => {
+					cache.Set(cacheKey, db);
+				});
+			}
 			return db;
 		}
 
@@ -191,27 +200,29 @@ namespace MSGooroo.SqlBacked {
 		/// <param name="items">The items we want to save in the cache</param>
 		/// <returns></returns>
 		public static void CacheItems<T>(ICacheProvider cache, string cacheKey, List<T> items) where T : class, ITableBacked, new() {
+			if (cache != null) {
 
-			Task.Run(() => {
-				T first = new T();
-				if (first.PrimaryKeyColumn == null) {
-					// Cache the whole object in one go, since we dont have
-					// primary keys to use for cache keys for individual items.
-					cache.Set(cacheKey, items);
+				Task.Run(() => {
+					T first = new T();
+					if (first.PrimaryKeyColumn == null) {
+						// Cache the whole object in one go, since we dont have
+						// primary keys to use for cache keys for individual items.
+						cache.Set(cacheKey, items);
 
-					return;
+						return;
 
-				}
+					}
 
-				// Update the individual items
-				foreach (var item in items) {
-					cache.Set(item.SingleCacheKey(item.PrimaryKey), item);
-				}
+					// Update the individual items
+					foreach (var item in items) {
+						cache.Set(item.SingleCacheKey(item.PrimaryKey), item);
+					}
 
-				// Store the list of keys
-				var keys = items.Select(x => x.PrimaryKey).ToList();
-				cache.Set(cacheKey, keys);
-			});
+					// Store the list of keys
+					var keys = items.Select(x => x.PrimaryKey).ToList();
+					cache.Set(cacheKey, keys);
+				});
+			}
 
 		}
 
@@ -223,8 +234,13 @@ namespace MSGooroo.SqlBacked {
 		/// <param name="obj"></param>
 		/// <param name="cache"></param>
 		public static void Uncache<T>(this T obj, ICacheProvider cache) where T : class, ITableBacked, new() {
-			string s = obj.SingleCacheKey<T>();
-			cache.Remove(s);
+			if (cache != null) {
+
+
+				string s = obj.SingleCacheKey<T>();
+				cache.Remove(s);
+			}
+
 		}
 
 		/// <summary>
@@ -248,7 +264,9 @@ namespace MSGooroo.SqlBacked {
 		/// <param name="cache"></param>
 		public static void UpdateCached<T>(this T obj, DbConnection cn, ICacheProvider cache) where T : class, ITableBacked, new() {
 			obj.Update(cn);
-			cache.Set<T>(obj.SingleCacheKey(), obj);
+			if (cache != null) {
+				cache.Set<T>(obj.SingleCacheKey(), obj);
+			}
 		}
 
 
@@ -291,7 +309,7 @@ namespace MSGooroo.SqlBacked {
 		public static string SqlCacheKey<T>(this T obj, string sql, object ps) where T : class, ITableBacked, new() {
 			return SqlCacheKey(obj.TableName, sql, ps);
 		}
-		public static string SqlCacheKey(string type, string sql, object ps){
+		public static string SqlCacheKey(string type, string sql, object ps) {
 			string sqlParams = "none";
 			if (ps != null) {
 				sqlParams = string.Join("|", ps.GetType()
@@ -305,19 +323,24 @@ namespace MSGooroo.SqlBacked {
 
 
 		public static string DumpJsonRowsCached(this DbConnection cn, ICacheProvider cache, string sql, object ps) {
+
+
 			var cacheKey = SqlCacheKey("custom_json", sql, ps);
 
-			var cached = cache.Get<string>(cacheKey);
-			if (cached != null) {
-				return cached;
+			if (cache != null) {
+				var cached = cache.Get<string>(cacheKey);
+				if (cached != null) {
+					return cached;
+				}
 			}
 
 			string json = DatabaseConnector.DumpJsonRows(cn, sql, ps);
 
-			Task.Run(() => {
-				cache.Set<string>(cacheKey, json);
-			});
-
+			if (cache != null) {
+				Task.Run(() => {
+					cache.Set<string>(cacheKey, json);
+				});
+			}
 			return json;
 
 		}
@@ -327,10 +350,11 @@ namespace MSGooroo.SqlBacked {
 
 			string json = DatabaseConnector.DumpJsonRows(cn, sql, ps);
 
-			Task.Run(() => {
-				cache.Set<string>(cacheKey, json);
-			});
-
+			if (cache != null) {
+				Task.Run(() => {
+					cache.Set<string>(cacheKey, json);
+				});
+			}
 			return json;
 
 		}
@@ -340,17 +364,20 @@ namespace MSGooroo.SqlBacked {
 		public static DataTable DumpDataTableCached(this DbConnection cn, ICacheProvider cache, string sql, object ps) {
 			var cacheKey = SqlCacheKey("custom_datatable", sql, ps);
 
-			var cached = cache.Get<DataTable>(cacheKey);
-			if (cached != null) {
-				return cached;
+			if (cache != null) {
+				var cached = cache.Get<DataTable>(cacheKey);
+				if (cached != null) {
+					return cached;
+				}
 			}
 
 			DataTable tbl = DatabaseConnector.DumpDataTable(cn, sql, ps);
 
-			Task.Run(() => {
-				cache.Set<DataTable>(cacheKey, tbl);
-			});
-
+			if (cache != null) {
+				Task.Run(() => {
+					cache.Set<DataTable>(cacheKey, tbl);
+				});
+			}
 			return tbl;
 
 		}
@@ -360,10 +387,11 @@ namespace MSGooroo.SqlBacked {
 
 			DataTable tbl = DatabaseConnector.DumpDataTable(cn, sql, ps);
 
-			Task.Run(() => {
-				cache.Set<DataTable>(cacheKey, tbl);
-			});
-
+			if (cache != null) {
+				Task.Run(() => {
+					cache.Set<DataTable>(cacheKey, tbl);
+				});
+			}
 			return tbl;
 
 		}
