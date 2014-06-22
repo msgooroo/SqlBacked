@@ -3,6 +3,7 @@ using System.Data.Common;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Data;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 
@@ -173,6 +174,23 @@ namespace MSGooroo.SqlBacked {
 						data.Add(rowData);
 					}
 					return JsonConvert.SerializeObject(new { ColumnNames = columnNames, Rows = data });
+				}
+			}
+		}
+
+		public static DataTable DumpDataTable(this DbConnection cn, string sql, object ps) {
+			using (var cmd = cn.CreateCommand()) {
+				cmd.CommandText = sql;
+				if (ps != null) {
+					foreach (var p in ps.GetType().GetProperties()) {
+						cmd.Parameters.Add(GetParameter(cmd, "@" + p.Name, p.GetValue(ps)));
+					}
+				}
+				using (var reader = cmd.ExecuteReader()) {
+					// Field names
+					var table = new DataTable();
+					table.Load(reader);
+					return table;
 				}
 			}
 		}

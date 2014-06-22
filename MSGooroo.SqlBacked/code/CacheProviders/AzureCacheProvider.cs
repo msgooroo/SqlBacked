@@ -23,23 +23,35 @@ namespace MSGooroo.SqlBacked {
 		#region ICacheProvider Members
 
 		public void Set<T>(string cacheKey, T value) where T : class {
+			if (_cache == null) {
+				return;
+			}
 			_cache.Put(cacheKey, value);
-
+			
 
 		}
 
 		public T Get<T>(string cacheKey) where T: class {
+			if (_cache == null) {
+				return null;
+			}
 			return _cache.Get(cacheKey) as T;
 
 		}
 
 
 		public void Remove(string cacheKey) {
+			if (_cache == null) {
+				return;
+			}
 			_cache.Remove(cacheKey);
 
 		}
 
 		public IEnumerable<T> GetMany<T>(IEnumerable<string> cacheKeys) where T : class {
+			if (_cache == null) {
+				return null;
+			}
 			var items = _cache.BulkGet(cacheKeys);
 			return items.Select(x => x.Value as T);
 

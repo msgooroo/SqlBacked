@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Data;
 using System.Data.Common;
 using System.Collections.Generic;
 using System.Linq;
@@ -320,6 +321,7 @@ namespace MSGooroo.SqlBacked {
 			return json;
 
 		}
+
 		public static string DumpJsonRowsAndRefreshCached(this DbConnection cn, ICacheProvider cache, string sql, object ps) {
 			var cacheKey = SqlCacheKey("custom_json", sql, ps);
 
@@ -330,6 +332,39 @@ namespace MSGooroo.SqlBacked {
 			});
 
 			return json;
+
+		}
+
+
+
+		public static DataTable DumpDataTableCached(this DbConnection cn, ICacheProvider cache, string sql, object ps) {
+			var cacheKey = SqlCacheKey("custom_datatable", sql, ps);
+
+			var cached = cache.Get<DataTable>(cacheKey);
+			if (cached != null) {
+				return cached;
+			}
+
+			DataTable tbl = DatabaseConnector.DumpDataTable(cn, sql, ps);
+
+			Task.Run(() => {
+				cache.Set<DataTable>(cacheKey, tbl);
+			});
+
+			return tbl;
+
+		}
+
+		public static DataTable DumpDataTableAndRefreshCached(this DbConnection cn, ICacheProvider cache, string sql, object ps) {
+			var cacheKey = SqlCacheKey("custom_datatable", sql, ps);
+
+			DataTable tbl = DatabaseConnector.DumpDataTable(cn, sql, ps);
+
+			Task.Run(() => {
+				cache.Set<DataTable>(cacheKey, tbl);
+			});
+
+			return tbl;
 
 		}
 
