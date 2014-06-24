@@ -26,17 +26,26 @@ namespace MSGooroo.SqlBacked {
 			if (_db == null) {
 				return;
 			}
-			byte[] buffer = Serialize(value);
-			_db.StringSet(cacheKey, buffer);
-
+			try {
+				byte[] buffer = Serialize(value);
+				_db.StringSet(cacheKey, buffer);
+			} catch {
+				// Add in logging here
+				return;
+			}
 		}
 
 		public T Get<T>(string cacheKey) where T : class {
 			if (_db == null) {
 				return null;
 			}
-			byte[] buffer = _db.StringGet(cacheKey);
-			return Deserialize<T>(buffer);
+			try {
+				byte[] buffer = _db.StringGet(cacheKey);
+				return Deserialize<T>(buffer);
+			} catch {
+				// Add in logging here
+				return null;
+			}
 		}
 
 
@@ -44,8 +53,12 @@ namespace MSGooroo.SqlBacked {
 			if (_db == null) {
 				return;
 			}
-			_db.KeyDelete(cacheKey);
-
+			try {
+				_db.KeyDelete(cacheKey);
+			} catch {
+				// Add in logging here
+				return ;
+			}
 		}
 
 		public IEnumerable<T> GetMany<T>(IEnumerable<string> cacheKeys) where T : class {

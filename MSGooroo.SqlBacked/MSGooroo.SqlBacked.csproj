@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{CAB09B9F-F1F6-4670-9A8C-552B74B33191}</ProjectGuid>
+    <ProjectGuid>{61D0C4E0-3690-4A57-B146-96A36BDBB39E}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>MSGooroo.SqlBacked</RootNamespace>
