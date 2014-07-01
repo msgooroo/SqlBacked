@@ -169,7 +169,12 @@ namespace MSGooroo.SqlBacked {
 					while (reader.Read()) {
 						Dictionary<string, string> rowData = new Dictionary<string, string>();
 						for (var i = 0; i < reader.FieldCount; i++) {
-							rowData[columnNames[i]] = reader[i].ToString();
+							if (reader[i].GetType() == typeof(DateTime)) {
+								// Use ISO time
+								rowData[columnNames[i]] = ((DateTime)reader[i]).ToString("s");
+							} else {
+								rowData[columnNames[i]] = reader[i].ToString();
+							}
 						}
 						data.Add(rowData);
 					}

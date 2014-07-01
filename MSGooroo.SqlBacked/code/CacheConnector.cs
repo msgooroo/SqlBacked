@@ -317,7 +317,7 @@ namespace MSGooroo.SqlBacked {
 					.Select(x => x.Name + "=" + (x.GetValue(ps) ?? "null").ToString())
 				);
 			}
-			return string.Format("{0}|sql|{1}|{2}", type, sql.GetHashCode(), sqlParams);
+			return string.Format("{0}|sql|{1}|{2}", type, sql, sqlParams);
 		}
 
 

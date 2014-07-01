@@ -11,6 +11,10 @@ namespace MSGooroo.SqlBacked {
 		T Get<T>(string cacheKey) where T : class;
 		IEnumerable<T> GetMany<T>(IEnumerable<string> cacheKeys) where T : class;
 
+		/// <summary>
+		/// Flush the cache, (rmove all keys and values everywhere).
+		/// </summary>
+		void Flush();
 
 		void Remove(string cacheKey);
 	

@@ -61,5 +61,10 @@ namespace MSGooroo.SqlBacked {
 
 
 
+
+
+		public void Flush() {
+			_cache.Clear();
+		}
 	}
 }

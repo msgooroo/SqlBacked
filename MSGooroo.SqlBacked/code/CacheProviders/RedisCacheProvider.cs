@@ -16,8 +16,10 @@ namespace MSGooroo.SqlBacked {
 	public class RedisCacheProvider : ICacheProvider {
 
 		private IDatabase _db;
-		public RedisCacheProvider(IDatabase db) {
+		private IServer _server;
+		public RedisCacheProvider(IDatabase db, IServer server) {
 			_db = db;
+			_server = server;
 		}
 
 		#region ICacheProvider Members
@@ -101,5 +103,10 @@ namespace MSGooroo.SqlBacked {
 			}
 		}
 
+
+
+		public void Flush() {
+			_server.FlushAllDatabases();
+		}
 	}
 }
