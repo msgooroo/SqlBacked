@@ -201,7 +201,7 @@ namespace PocoGenerator {
 			string primaryKeyCol = null; 
 			if (PrimaryKey != null) {
 				properties += "\t\tprivate int _primaryKey;\r\n";
-				properties += "\t\tpublic int PrimaryKey { get {return _primaryKey;} }\r\n";
+				properties += "\t\tpublic int PrimaryKey { get {return _primaryKey;}  set {_primaryKey = value;} }\r\n";
 
 				primaryKeyCol = string.Format("\t\tpublic string PrimaryKeyColumn {{ get {{ return \"{0}\"; }} }}", PrimaryKey.ColumnName);
 			} else {
