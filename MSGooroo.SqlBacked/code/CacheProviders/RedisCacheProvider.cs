@@ -72,7 +72,11 @@ namespace MSGooroo.SqlBacked {
 						.Select(x => (RedisKey)x)
 						.ToArray()
 			);
-			return values.Select(x => Deserialize<T>(x)).ToList();
+			try {
+				return values.Select(x => Deserialize<T>(x)).ToList();
+			} catch (Exception ex) {
+				return null;
+			}
 		}
 
 		#endregion
