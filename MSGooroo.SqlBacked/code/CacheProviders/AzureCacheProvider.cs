@@ -28,7 +28,7 @@ namespace MSGooroo.SqlBacked {
 			}
 			try {
 				_cache.Put(cacheKey, value);
-			} catch (Exception ex) {
+			} catch {
 				return;
 			}
 
@@ -37,10 +37,10 @@ namespace MSGooroo.SqlBacked {
 		public T Get<T>(string cacheKey) where T : class {
 			if (_cache == null) {
 				return null;
-			} 
+			}
 			try {
 				return _cache.Get(cacheKey) as T;
-			} catch (Exception ex) {
+			} catch {
 				return null;
 			}
 		}
@@ -52,8 +52,8 @@ namespace MSGooroo.SqlBacked {
 			}
 			try {
 				_cache.Remove(cacheKey);
-			} catch (Exception ex) {
-				
+			} catch {
+
 				return;
 			}
 		}
@@ -65,7 +65,7 @@ namespace MSGooroo.SqlBacked {
 			var items = _cache.BulkGet(cacheKeys);
 			try {
 				return items.Select(x => x.Value as T);
-			} catch (Exception ex) {
+			} catch {
 				return null;
 			}
 		}
