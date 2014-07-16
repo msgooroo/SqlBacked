@@ -74,7 +74,7 @@ namespace MSGooroo.SqlBacked {
 			);
 			try {
 				return values.Select(x => Deserialize<T>(x)).ToList();
-			} catch (Exception ex) {
+			} catch  {
 				return null;
 			}
 		}
