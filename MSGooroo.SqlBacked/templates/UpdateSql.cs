@@ -1,4 +1,6 @@
-﻿		[JsonIgnore]
+﻿
+		[JsonIgnore]
+		[ScriptIgnore] 
 		public string UpdateSql  { 
 			get {
 				return @"UPDATE [{SCHEMA_NAME}].[{TYPE_NAME}] SET

@@ -1,4 +1,6 @@
-﻿		[JsonIgnore]
+﻿
+		[JsonIgnore]
+		[ScriptIgnore] 
 		public string InsertSql { 
 			get {
 				return  @"INSERT INTO [{SCHEMA_NAME}].[{TYPE_NAME}] ([{COLUMN_LIST}])

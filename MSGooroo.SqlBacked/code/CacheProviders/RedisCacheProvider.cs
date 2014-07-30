@@ -17,9 +17,22 @@ namespace MSGooroo.SqlBacked {
 
 		private IDatabase _db;
 		private IServer _server;
-		public RedisCacheProvider(IDatabase db, IServer server) {
+		public RedisCacheProvider(IDatabase db) {
 			_db = db;
-			_server = server;
+		}
+
+
+		public void SetAdminConnection(ConnectionMultiplexer cn) {
+
+			var endpoints = cn.GetEndPoints();
+			_server = cn.GetServer(endpoints.First());
+		}
+		public void Flush() {
+			if (_server == null) {
+				throw new InvalidOperationException("Please call .SetAdminConnection() to set the server connection");
+			}
+
+			_server.FlushAllDatabases();
 		}
 
 		#region ICacheProvider Members
@@ -28,26 +41,19 @@ namespace MSGooroo.SqlBacked {
 			if (_db == null) {
 				return;
 			}
-			try {
-				byte[] buffer = Serialize(value);
-				_db.StringSet(cacheKey, buffer);
-			} catch {
-				// Add in logging here
-				return;
-			}
+			byte[] buffer = Serialize(value);
+			_db.StringSet(cacheKey, buffer);
+
 		}
 
 		public T Get<T>(string cacheKey) where T : class {
 			if (_db == null) {
 				return null;
 			}
-			try {
-				byte[] buffer = _db.StringGet(cacheKey);
-				return Deserialize<T>(buffer);
-			} catch {
-				// Add in logging here
-				return null;
-			}
+
+			byte[] buffer = _db.StringGet(cacheKey);
+			return Deserialize<T>(buffer);
+
 		}
 
 
@@ -55,12 +61,8 @@ namespace MSGooroo.SqlBacked {
 			if (_db == null) {
 				return;
 			}
-			try {
-				_db.KeyDelete(cacheKey);
-			} catch {
-				// Add in logging here
-				return ;
-			}
+			_db.KeyDelete(cacheKey);
+
 		}
 
 		public IEnumerable<T> GetMany<T>(IEnumerable<string> cacheKeys) where T : class {
@@ -72,11 +74,8 @@ namespace MSGooroo.SqlBacked {
 						.Select(x => (RedisKey)x)
 						.ToArray()
 			);
-			try {
-				return values.Select(x => Deserialize<T>(x)).ToList();
-			} catch  {
-				return null;
-			}
+			return values.Select(x => Deserialize<T>(x)).ToList();
+
 		}
 
 		#endregion
@@ -108,9 +107,5 @@ namespace MSGooroo.SqlBacked {
 		}
 
 
-
-		public void Flush() {
-			_server.FlushAllDatabases();
-		}
 	}
 }

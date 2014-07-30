@@ -23,7 +23,7 @@ using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading;
 using System.Threading.Tasks;
-
+using System.Web.Script.Serialization;
 using Newtonsoft.Json;
 
 using MSGooroo.SqlBacked;
@@ -33,8 +33,16 @@ namespace [{NAMESPACE}] {
 	[Serializable]
 	public partial class [{TABLE_NAME}] : ITableBacked{
 
+		[JsonIgnore]
+		[ScriptIgnore] 
 [{TABLE_NAME_PROPERTY}]
+
+		[JsonIgnore]
+		[ScriptIgnore] 
 [{SCHEMA_NAME_PROPERTY}]
+
+		[JsonIgnore]
+		[ScriptIgnore] 
 [{PRIMARY_KEY_PROPERTY}]
 
 #region Properties
@@ -42,6 +50,7 @@ namespace [{NAMESPACE}] {
 #endregion
 
 #region SQL commands
+
 [{INSERT_SQL}]
 
 [{UPDATE_SQL}]

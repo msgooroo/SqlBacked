@@ -26,11 +26,11 @@ namespace MSGooroo.SqlBacked {
 			if (_cache == null) {
 				return;
 			}
-			try {
-				_cache.Put(cacheKey, value);
-			} catch {
-				return;
-			}
+			//try {
+			_cache.Put(cacheKey, value);
+			//} catch {
+			//	return;
+			//}
 
 		}
 
@@ -38,11 +38,11 @@ namespace MSGooroo.SqlBacked {
 			if (_cache == null) {
 				return null;
 			}
-			try {
-				return _cache.Get(cacheKey) as T;
-			} catch {
-				return null;
-			}
+			//try {
+			return _cache.Get(cacheKey) as T;
+			//} catch {
+			//	return null;
+			//}
 		}
 
 
@@ -50,12 +50,12 @@ namespace MSGooroo.SqlBacked {
 			if (_cache == null) {
 				return;
 			}
-			try {
-				_cache.Remove(cacheKey);
-			} catch {
+			//try {
+			_cache.Remove(cacheKey);
+			//} catch {
 
-				return;
-			}
+			//	return;
+			//}
 		}
 
 		public IEnumerable<T> GetMany<T>(IEnumerable<string> cacheKeys) where T : class {
@@ -63,11 +63,11 @@ namespace MSGooroo.SqlBacked {
 				return null;
 			}
 			var items = _cache.BulkGet(cacheKeys);
-			try {
-				return items.Select(x => x.Value as T);
-			} catch {
-				return null;
-			}
+			//try {
+			return items.Select(x => x.Value as T);
+			//} catch {
+			//	return null;
+			//}
 		}
 
 		#endregion

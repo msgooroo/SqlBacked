@@ -56,7 +56,11 @@ namespace PocoGenerator {
 
 		public string GetUpdateSql() {
 			if (PrimaryKey == null) {
-				return "\t\tpublic string UpdateSql  { get { throw new InvalidOperationException(\"This object has no Primary Key set in the Database\");} }";
+				string updateCode = "\t\t[JsonIgnore]\r\n";
+				updateCode += "\t\t[ScriptIgnore]\r\n";
+
+				updateCode += "\t\tpublic string UpdateSql  { get { throw new InvalidOperationException(\"This object has no Primary Key set in the Database\");} }";
+				return updateCode;
 			}
 			string path = Program.MapPath(@"..\templates\UpdateSql.cs");
 			var template = File.ReadAllText(path);
@@ -198,14 +202,21 @@ namespace PocoGenerator {
 			}
 
 			var properties = string.Join("\r\n", Columns.Select(x => x.PropertyCode));
-			string primaryKeyCol = null; 
+			string primaryKeyCol = null;
 			if (PrimaryKey != null) {
 				properties += "\t\tprivate int _primaryKey;\r\n";
+
+				properties += "\t\t[JsonIgnore]\r\n";
+				properties += "\t\t[ScriptIgnore]\r\n";
 				properties += "\t\tpublic int PrimaryKey { get {return _primaryKey;}  set {_primaryKey = value;} }\r\n";
 
 				primaryKeyCol = string.Format("\t\tpublic string PrimaryKeyColumn {{ get {{ return \"{0}\"; }} }}", PrimaryKey.ColumnName);
 			} else {
+				properties += "\t\t[JsonIgnore]\r\n";
+				properties += "\t\t[ScriptIgnore]\r\n";
 				properties += "\t\tpublic int PrimaryKey { get { throw new InvalidOperationException(\"This object has no Primary Key set in the Database\");} }\r\n";
+
+
 				primaryKeyCol = "\t\tpublic string PrimaryKeyColumn { get { return null;} }\r\n";
 			}
 

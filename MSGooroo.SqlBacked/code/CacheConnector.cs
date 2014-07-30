@@ -109,7 +109,11 @@ namespace MSGooroo.SqlBacked {
 				var objects = new List<T>();
 
 				if (references != null) {
-					var items = cache.GetMany<T>(references.Select(x => first.SingleCacheKey(x))).ToList();
+					var enumerator = cache.GetMany<T>(references.Select(x => first.SingleCacheKey(x)));
+					if (enumerator == null) {
+						return null;
+					}
+					var items = enumerator.ToList();
 
 					// Fill any holes in the list (e.g. if items have been evicted from the cache)
 					for (var i = 0; i < items.Count; i++) {
