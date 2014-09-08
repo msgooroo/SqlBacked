@@ -30,7 +30,6 @@ namespace PocoGenerator {
 			IncludeCache = includeCache;
 
 			Columns = new List<PocoColumn>();
-
 			using (var cn = new SqlConnection(connectionString)) {
 				DatabaseName = cn.Database;
 				cn.Open();
@@ -40,13 +39,23 @@ namespace PocoGenerator {
 				using (var cmd = new SqlCommand(File.ReadAllText(path), cn)) {
 					cmd.Parameters.AddWithValue("@TABLE_SCHEMA", schemaName);
 					cmd.Parameters.AddWithValue("@TABLE_NAME", tableName);
+
+					bool multiColumnPk = false;
 					using (SqlDataReader reader = cmd.ExecuteReader()) {
 						while (reader.Read()) {
 							var c = new PocoColumn(reader);
 							Columns.Add(c);
+							// We only allow for single column, int, based primary keys
+							// Since otherwise we need to change the types on our Get methods
+							if (!multiColumnPk && c.IsPrimaryKey && c.DotNetType == "int") {
 
-							if (c.IsPrimaryKey) {
-								PrimaryKey = c;
+								if (PrimaryKey != null) {
+									PrimaryKey = null;
+									multiColumnPk = true;
+								} else {
+
+									PrimaryKey = c;
+								}
 							}
 						}
 					}
