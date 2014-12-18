@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Data.Common;
+using System.Data;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -18,6 +19,7 @@ namespace MSGooroo.SqlBacked {
 		string UpdateSql { get; }
 
 		int PrimaryKey { get; }
+
 
 
 	}

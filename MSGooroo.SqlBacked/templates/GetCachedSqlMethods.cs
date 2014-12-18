@@ -10,7 +10,7 @@
 			/// <param name="sql">SQL query to execute</param>
 			/// <param name="param">Object to reflect to find parameters for the query</param>
 			/// <returns></returns>
-			public static IEnumerable<[{TYPE_NAME}]> GetSqlCached(DbConnection cn, ICacheProvider cache, string sql, object ps){
+			public static List<[{TYPE_NAME}]> GetSqlCached(DbConnection cn, ICacheProvider cache, string sql, object ps){
 				return CacheConnector.GetSqlCached<[{TYPE_NAME}]>(cn, cache, sql, ps);
 			}
 
@@ -28,7 +28,18 @@
 			/// <param name="sql">SQL query to execute</param>
 			/// <param name="param">Object to reflect to find parameters for the query</param>
 			/// <returns></returns>
-			public static IEnumerable<[{TYPE_NAME}]> GetSqlAndRefreshCached(DbConnection cn, ICacheProvider cache, string sql, object ps){
+			public static List<[{TYPE_NAME}]> GetSqlAndRefreshCached(DbConnection cn, ICacheProvider cache, string sql, object ps){
 				return CacheConnector.GetSqlAndRefreshCached<[{TYPE_NAME}]>(cn, cache, sql, ps);
 			}
 
+
+
+			//public static async Task<List<[{TYPE_NAME}]>> GetSqlCachedAsync(DbConnection cn, ICacheProvider cache, string sql, object ps){
+			//	return await CacheConnector.GetSqlCachedAsync<[{TYPE_NAME}]>(cn, cache, sql, ps);
+			//}
+
+
+
+			//public static async Task<List<[{TYPE_NAME}]>> GetSqlAndRefreshCachedAsync(DbConnection cn, ICacheProvider cache, string sql, object ps){
+			//	return await CacheConnector.GetSqlAndRefreshCachedAsync<[{TYPE_NAME}]>(cn, cache, sql, ps);
+			//}

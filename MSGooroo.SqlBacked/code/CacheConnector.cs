@@ -7,8 +7,8 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace MSGooroo.SqlBacked {
-	public static class CacheConnector {
 
+	public static class CacheConnector {
 		/// <summary>
 		/// Gets a list of items using the SQL supplied, trying the cache first, then the database.
 		/// The object passed in as "ps" will be reflected on, and its properties used as parameters.
@@ -20,7 +20,7 @@ namespace MSGooroo.SqlBacked {
 		/// <param name="param">An object whose properties will be used as named parameters</param>
 		/// <returns></returns>
 
-		public static IEnumerable<T> GetSqlCached<T>(DbConnection cn, ICacheProvider cache, string sql, object ps) where T : class, ITableBacked, new() {
+		public static List<T> GetSqlCached<T>(DbConnection cn, ICacheProvider cache, string sql, object ps) where T : class, ITableBacked, new() {
 
 			T first = new T();
 
@@ -32,6 +32,18 @@ namespace MSGooroo.SqlBacked {
 				return GetSqlAndRefreshCached<T>(cn, cache, sql, ps);
 			}
 		}
+		//public static async Task<List<T>> GetSqlCachedAsync<T>(DbConnection cn, ICacheProvider cache, string sql, object ps) where T : class, ITableBacked, new() {
+
+		//	T first = new T();
+
+		//	string cacheKey = first.SqlCacheKey(sql, ps);
+		//	var items = await GetCachedOnlyAsync<T>(cn, cache, cacheKey);
+		//	if (items != null) {
+		//		return items;
+		//	} else {
+		//		return await GetSqlAndRefreshCachedAsync<T>(cn, cache, sql, ps);
+		//	}
+		//}
 
 		/// <summary>
 		/// Gets a list of items, trying the cache first, then the database
@@ -42,7 +54,7 @@ namespace MSGooroo.SqlBacked {
 		/// <param name="condition"></param>
 		/// <param name="param"></param>
 		/// <returns></returns>
-		public static IEnumerable<T> GetCached<T>(DbConnection cn, ICacheProvider cache, string condition, object param) where T : class, ITableBacked, new() {
+		public static List<T> GetCached<T>(DbConnection cn, ICacheProvider cache, string condition, object param) where T : class, ITableBacked, new() {
 			T first = new T();
 
 			string cacheKey = first.CacheKey(condition, param);
@@ -53,6 +65,17 @@ namespace MSGooroo.SqlBacked {
 				return GetAndRefreshCached<T>(cn, cache, condition, param);
 			}
 		}
+		//public static async Task<List<T>> GetCachedAsync<T>(DbConnection cn, ICacheProvider cache, string condition, object param) where T : class, ITableBacked, new() {
+		//	T first = new T();
+
+		//	string cacheKey = first.CacheKey(condition, param);
+		//	var items = await GetCachedOnlyAsync<T>(cn, cache, cacheKey);
+		//	if (items != null) {
+		//		return items;
+		//	} else {
+		//		return await GetAndRefreshCachedAsync<T>(cn, cache, condition, param);
+		//	}
+		//}
 
 		/// <summary>
 		/// Get an item, trying the cache first, then the database
@@ -75,6 +98,20 @@ namespace MSGooroo.SqlBacked {
 			}
 			return GetAndRefreshCached<T>(cn, cache, primaryKey);
 		}
+		//public static async Task<T> GetCachedAsync<T>(DbConnection cn, ICacheProvider cache, int primaryKey) where T : class, ITableBacked, new() {
+		//	T first = new T();
+
+		//	var cacheKey = first.SingleCacheKey(primaryKey);
+
+		//	if (cache != null) {
+		//		var item = await cache.GetAsync<T>(cacheKey);
+		//		if (item != null) {
+		//			return item;
+		//		}
+		//	}
+		//	return await GetAndRefreshCachedAsync<T>(cn, cache, primaryKey);
+		//}
+
 
 		/// <summary>
 		/// Try to get a list of values by only going to the cache.  Returns null if the list
@@ -86,50 +123,21 @@ namespace MSGooroo.SqlBacked {
 		/// <param name="cache">The cache to query</param>
 		/// <param name="cacheKey">The key for the list we are querying</param>
 		/// <returns></returns>
-		private static IEnumerable<T> GetCachedOnly<T>(DbConnection cn, ICacheProvider cache, string cacheKey) where T : class, ITableBacked, new() {
+		private static List<T> GetCachedOnly<T>(DbConnection cn, ICacheProvider cache, string cacheKey) where T : class, ITableBacked, new() {
 			if (cache == null) {
 				return null;
 			}
-
-			T first = new T();
-
-			// If there is no primary key, then anything in the cache will
-			// just be a list of items we can return directly (rather than
-			// lists of ids - since there are no ids).
-			if (first.PrimaryKeyColumn == null) {
-				var cached = cache.Get<List<T>>(cacheKey);
-				return cached;
-			}
-
-			var references = cache.Get<List<int>>(cacheKey);
-			if (references != null) {
-				if (references.Count == 0) {
-					return new T[] { };
-				}
-				var objects = new List<T>();
-
-				if (references != null) {
-					var enumerator = cache.GetMany<T>(references.Select(x => first.SingleCacheKey(x)));
-					if (enumerator == null) {
-						return null;
-					}
-					var items = enumerator.ToList();
-
-					// Fill any holes in the list (e.g. if items have been evicted from the cache)
-					for (var i = 0; i < items.Count; i++) {
-						if (items[i] == null) {
-							int primaryKey = references[i];
-							items[i] = GetAndRefreshCached<T>(cn, cache, primaryKey);
-						}
-					}
-					// If its still null after going to the database, then its probably been
-					// deleted, so exclude the null entry from the list.
-					return items.Where(x => x != null);
-				}
-			}
-			return null;
-
+			return cache.Get<List<T>>(cacheKey);
 		}
+
+
+		//private static async Task<List<T>> GetCachedOnlyAsync<T>(DbConnection cn, ICacheProvider cache, string cacheKey) where T : class, ITableBacked, new() {
+		//	if (cache == null) {
+		//		return null;
+		//	}
+		//	return await cache.GetAsync<List<T>>(cacheKey);
+		//}
+
 
 		/// <summary>
 		/// Gets the item from the database, and populates the cache.
@@ -152,6 +160,21 @@ namespace MSGooroo.SqlBacked {
 			return db;
 		}
 
+		//public static async Task<T> GetAndRefreshCachedAsync<T>(DbConnection cn, ICacheProvider cache, int primaryKey) where T : class, ITableBacked, new() {
+		//	T first = new T();
+		//	var cacheKey = first.SingleCacheKey(primaryKey);
+
+		//	var db = await DatabaseConnector.GetAsync<T>(cn, primaryKey);
+		//	if (cache != null) {
+
+		//		await cache.SetAsync(cacheKey, db);
+		//	}
+		//	return db;
+		//}
+
+
+
+
 		/// <summary>
 		/// Gets the list of items from the database and populates the cache.
 		/// </summary>
@@ -161,15 +184,24 @@ namespace MSGooroo.SqlBacked {
 		/// <param name="condition"></param>
 		/// <param name="param"></param>
 		/// <returns></returns>
-		public static IEnumerable<T> GetAndRefreshCached<T>(DbConnection cn, ICacheProvider cache, string condition, object param) where T : class, ITableBacked, new() {
+		public static List<T> GetAndRefreshCached<T>(DbConnection cn, ICacheProvider cache, string condition, object param) where T : class, ITableBacked, new() {
 			T first = new T();
 			string cacheKey = first.CacheKey(condition, param);
-			var items = DatabaseConnector.Get<T>(cn, condition, param).ToList();
+			var items = DatabaseConnector.Get<T>(cn, condition, param);
 
 			CacheItems(cache, cacheKey, items);
 
 			return items;
 		}
+		//public static async Task<List<T>> GetAndRefreshCachedAsync<T>(DbConnection cn, ICacheProvider cache, string condition, object param) where T : class, ITableBacked, new() {
+		//	T first = new T();
+		//	string cacheKey = first.CacheKey(condition, param);
+		//	var items = await DatabaseConnector.GetAsync<T>(cn, condition, param);
+
+		//	CacheItems(cache, cacheKey, items);
+
+		//	return items;
+		//}
 
 
 		/// <summary>
@@ -181,17 +213,24 @@ namespace MSGooroo.SqlBacked {
 		/// <param name="condition"></param>
 		/// <param name="param"></param>
 		/// <returns></returns>
-		public static IEnumerable<T> GetSqlAndRefreshCached<T>(DbConnection cn, ICacheProvider cache, string sql, object ps) where T : class, ITableBacked, new() {
+		public static List<T> GetSqlAndRefreshCached<T>(DbConnection cn, ICacheProvider cache, string sql, object ps) where T : class, ITableBacked, new() {
 			T first = new T();
+
 			string cacheKey = first.SqlCacheKey(sql, ps);
-
 			var items = DatabaseConnector.GetSql<T>(cn, sql, ps).ToList();
-
-
 			CacheItems(cache, cacheKey, items);
 
 			return items;
 		}
+		//public static async Task<List<T>> GetSqlAndRefreshCachedAsync<T>(DbConnection cn, ICacheProvider cache, string sql, object ps) where T : class, ITableBacked, new() {
+		//	T first = new T();
+
+		//	string cacheKey = first.SqlCacheKey(sql, ps);
+		//	var items = await DatabaseConnector.GetSqlAsync<T>(cn, sql, ps);
+		//	await CacheItemsAsync(cache, cacheKey, items);
+
+		//	return items;
+		//}
 
 		/// <summary>
 		///		Caches a list of items from the database, with the list being stored
@@ -207,29 +246,27 @@ namespace MSGooroo.SqlBacked {
 			if (cache != null) {
 
 				Task.Run(() => {
-					T first = new T();
-					if (first.PrimaryKeyColumn == null) {
-						// Cache the whole object in one go, since we dont have
-						// primary keys to use for cache keys for individual items.
-						cache.Set(cacheKey, items);
-
-						return;
-
-					}
-
-					// Update the individual items
-					foreach (var item in items) {
-						cache.Set(item.SingleCacheKey(item.PrimaryKey), item);
-					}
-
-					// Store the list of keys
-					var keys = items.Select(x => x.PrimaryKey).ToList();
-					cache.Set(cacheKey, keys);
+					cache.Set(cacheKey, items);
 				});
 			}
 
 		}
 
+		//public static async Task CacheItemsAsync<T>(ICacheProvider cache, string cacheKey, List<T> items) where T : class, ITableBacked, new() {
+		//	if (cache != null) {
+
+		//		T first = new T();
+		//		if (first.PrimaryKeyColumn == null) {
+		//			// Cache the whole object in one go, since we dont have
+		//			// primary keys to use for cache keys for individual items.
+		//			await cache.SetAsync(cacheKey, items);
+
+		//			return;
+
+		//		}
+		//		return;
+		//	}
+		//}
 
 		/// <summary>
 		/// Remove the reference to this item from the cache
@@ -239,14 +276,18 @@ namespace MSGooroo.SqlBacked {
 		/// <param name="cache"></param>
 		public static void Uncache<T>(this T obj, ICacheProvider cache) where T : class, ITableBacked, new() {
 			if (cache != null) {
-
-
 				string s = obj.SingleCacheKey<T>();
 				cache.Remove(s);
 			}
 
 		}
+		//public static async Task UncacheAsync<T>(this T obj, ICacheProvider cache) where T : class, ITableBacked, new() {
+		//	if (cache != null) {
+		//		string s = obj.SingleCacheKey<T>();
+		//		await cache.RemoveAsync(s);
+		//	}
 
+		//}
 		/// <summary>
 		/// Delete the object from the database and also remove it from the cache
 		/// </summary>
@@ -258,7 +299,10 @@ namespace MSGooroo.SqlBacked {
 			obj.Delete(cn);
 			obj.Uncache(cache);
 		}
-
+		//public static async Task DeleteCachedAsync<T>(this T obj, DbConnection cn, ICacheProvider cache) where T : class, ITableBacked, new() {
+		//	await obj.DeleteAsync(cn);
+		//	await obj.UncacheAsync(cache);
+		//}
 		/// <summary>
 		/// Execute the update command in the database, and update the cache to the current version
 		/// </summary>
@@ -298,7 +342,7 @@ namespace MSGooroo.SqlBacked {
 		/// <param name="condition">The SQL text following the WHERE</param>
 		/// <param name="param">A value to be added to the WHERE Condition</param>
 		public static string CacheKey<T>(this T obj, string condition, object param) where T : class, ITableBacked, new() {
-			return string.Format("{0}|list|{1}", obj.TableName, param);
+			return string.Format("{0}|list|{1}{2}", obj.TableName, condition, param);
 		}
 
 
@@ -313,6 +357,8 @@ namespace MSGooroo.SqlBacked {
 		public static string SqlCacheKey<T>(this T obj, string sql, object ps) where T : class, ITableBacked, new() {
 			return SqlCacheKey(obj.TableName, sql, ps);
 		}
+
+
 		public static string SqlCacheKey(string type, string sql, object ps) {
 			string sqlParams = "none";
 			if (ps != null) {
@@ -327,17 +373,13 @@ namespace MSGooroo.SqlBacked {
 
 
 		public static string DumpJsonRowsCached(this DbConnection cn, ICacheProvider cache, string sql, object ps) {
-
-
 			var cacheKey = SqlCacheKey("custom_json", sql, ps);
-
 			if (cache != null) {
 				var cached = cache.Get<string>(cacheKey);
 				if (cached != null) {
 					return cached;
 				}
 			}
-
 			string json = DatabaseConnector.DumpJsonRows(cn, sql, ps);
 
 			if (cache != null) {
@@ -348,6 +390,23 @@ namespace MSGooroo.SqlBacked {
 			return json;
 
 		}
+
+		//public static async Task<string> DumpJsonRowsCachedAsync(this DbConnection cn, ICacheProvider cache, string sql, object ps) {
+		//	var cacheKey = SqlCacheKey("custom_json", sql, ps);
+		//	if (cache != null) {
+		//		var cached = await cache.GetAsync<string>(cacheKey);
+		//		if (cached != null) {
+		//			return cached;
+		//		}
+		//	}
+		//	string json = await DatabaseConnector.DumpJsonRowsAsync(cn, sql, ps);
+
+		//	if (cache != null) {
+		//		await cache.SetAsync<string>(cacheKey, json);
+		//	}
+
+		//	return json;
+		//}
 
 		public static string DumpJsonRowsAndRefreshCached(this DbConnection cn, ICacheProvider cache, string sql, object ps) {
 			var cacheKey = SqlCacheKey("custom_json", sql, ps);
@@ -360,31 +419,53 @@ namespace MSGooroo.SqlBacked {
 				});
 			}
 			return json;
-
 		}
+
+		//public static async Task<string> DumpJsonRowsAndRefreshCachedAsync(this DbConnection cn, ICacheProvider cache, string sql, object ps) {
+		//	var cacheKey = SqlCacheKey("custom_json", sql, ps);
+
+		//	string json = await DatabaseConnector.DumpJsonRowsAsync(cn, sql, ps);
+
+		//	if (cache != null) {
+		//		await cache.SetAsync<string>(cacheKey, json);
+
+		//	}
+		//	return json;
+		//}
 
 
 
 		public static DataTable DumpDataTableCached(this DbConnection cn, ICacheProvider cache, string sql, object ps) {
 			var cacheKey = SqlCacheKey("custom_datatable", sql, ps);
-
 			if (cache != null) {
 				var cached = cache.Get<DataTable>(cacheKey);
 				if (cached != null) {
 					return cached;
 				}
 			}
-
 			DataTable tbl = DatabaseConnector.DumpDataTable(cn, sql, ps);
-
 			if (cache != null) {
 				Task.Run(() => {
 					cache.Set<DataTable>(cacheKey, tbl);
 				});
 			}
 			return tbl;
-
 		}
+
+		//public static async Task<DataTable> DumpDataTableCachedAsync(this DbConnection cn, ICacheProvider cache, string sql, object ps) {
+		//	var cacheKey = SqlCacheKey("custom_datatable", sql, ps);
+		//	if (cache != null) {
+		//		var cached = await cache.GetAsync<DataTable>(cacheKey);
+		//		if (cached != null) {
+		//			return cached;
+		//		}
+		//	}
+		//	DataTable tbl = await DatabaseConnector.DumpDataTableAsync(cn, sql, ps);
+		//	if (cache != null) {
+		//		await cache.SetAsync<DataTable>(cacheKey, tbl);
+		//	}
+		//	return tbl;
+		//}
 
 		public static DataTable DumpDataTableAndRefreshCached(this DbConnection cn, ICacheProvider cache, string sql, object ps) {
 			var cacheKey = SqlCacheKey("custom_datatable", sql, ps);
@@ -400,5 +481,17 @@ namespace MSGooroo.SqlBacked {
 
 		}
 
+		//public static async Task<DataTable> DumpDataTableAndRefreshCachedAsync(this DbConnection cn, ICacheProvider cache, string sql, object ps) {
+		//	var cacheKey = SqlCacheKey("custom_datatable", sql, ps);
+
+		//	DataTable tbl = await DatabaseConnector.DumpDataTableAsync(cn, sql, ps);
+
+		//	if (cache != null) {
+		//		await cache.SetAsync<DataTable>(cacheKey, tbl);
+
+		//	}
+		//	return tbl;
+
+		//}
 	}
 }
