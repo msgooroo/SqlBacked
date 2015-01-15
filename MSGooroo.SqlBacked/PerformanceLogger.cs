@@ -7,7 +7,7 @@ using System.Web;
 using System.Collections;
 using System.Diagnostics;
 
-namespace MSGooroo.SqlBacked {
+namespace GoorooIO.SqlBacked {
 	public class PerformanceLogger : IDisposable {
 
 		public class Counter {

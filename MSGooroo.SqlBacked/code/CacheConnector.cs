@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MSGooroo.SqlBacked {
+namespace GoorooIO.SqlBacked {
 
 	public static class CacheConnector {
 		/// <summary>

@@ -7,7 +7,7 @@ using System.Data;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 
-namespace MSGooroo.SqlBacked {
+namespace GoorooIO.SqlBacked {
 	public static class DatabaseConnector {
 
 

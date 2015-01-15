@@ -9,7 +9,7 @@ using System.Linq;
 using System.Text;
 using System.Reflection;
 
-namespace MSGooroo.SqlBacked {
+namespace GoorooIO.SqlBacked {
 
 	public class BatchContext {
 

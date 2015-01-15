@@ -26,7 +26,7 @@ using System.Threading.Tasks;
 using System.Web.Script.Serialization;
 using Newtonsoft.Json;
 
-using MSGooroo.SqlBacked;
+using GoorooIO.SqlBacked;
 
 namespace [{NAMESPACE}] {
 
