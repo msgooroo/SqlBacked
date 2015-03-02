@@ -1,0 +1,10 @@
+D:\Dropbox\projects\msgooroo\open-source\SqlBacked\MSGooroo.SqlBacked\bin\sqlbacked.exe.config
+D:\Dropbox\projects\msgooroo\open-source\SqlBacked\MSGooroo.SqlBacked\bin\sqlbacked.exe
+D:\Dropbox\projects\msgooroo\open-source\SqlBacked\MSGooroo.SqlBacked\bin\sqlbacked.pdb
+D:\Dropbox\projects\msgooroo\open-source\SqlBacked\MSGooroo.SqlBacked\bin\Newtonsoft.Json.dll
+D:\Dropbox\projects\msgooroo\open-source\SqlBacked\MSGooroo.SqlBacked\obj\Debug\GoorooIO.SqlBacked.csprojResolveAssemblyReference.cache
+D:\Dropbox\projects\msgooroo\open-source\SqlBacked\MSGooroo.SqlBacked\obj\Debug\sqlbacked.exe
+D:\Dropbox\projects\msgooroo\open-source\SqlBacked\MSGooroo.SqlBacked\obj\Debug\sqlbacked.pdb
+D:\Dropbox\projects\msgooroo\open-source\SqlBacked\GoorooIO.SqlBacked\bin\sqlbacked.exe.config
+D:\Dropbox\projects\msgooroo\open-source\SqlBacked\GoorooIO.SqlBacked\obj\Debug\sqlbacked.exe
+D:\Dropbox\projects\msgooroo\open-source\SqlBacked\GoorooIO.SqlBacked\obj\Debug\sqlbacked.pdb
