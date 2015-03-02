@@ -10,13 +10,14 @@ using Newtonsoft.Json;
 namespace GoorooIO.SqlBacked {
 	public static class DatabaseConnector {
 
+		public static int DEFAULT_TIMEOUT = 0;
 
 		public static DbCommand GetCommand<T>(this DbConnection cn, string condition, object param) where T : ITableBacked, new() {
 			var obj = new T();
 
 			string sql = string.Format("SELECT * FROM {0}.{1} WHERE {2} @x", obj.SchemaName, obj.TableName, condition);
 			var cmd = cn.CreateCommand();
-
+			cmd.CommandTimeout = DEFAULT_TIMEOUT;
 			cmd.CommandText = sql;
 			cmd.Parameters.Add(GetParameter(cmd, "@x", param));
 
@@ -32,6 +33,7 @@ namespace GoorooIO.SqlBacked {
 
 		public static DbCommand GetSqlCommand<T>(this DbConnection cn, string sql, object ps) where T : ITableBacked, new() {
 			var cmd = cn.CreateCommand();
+			cmd.CommandTimeout = DEFAULT_TIMEOUT;
 			cmd.CommandText = sql;
 			if (ps != null) {
 				foreach (var p in ps.GetType().GetProperties()) {
@@ -56,12 +58,18 @@ namespace GoorooIO.SqlBacked {
 
 		public static T GetSingle<T>(DbCommand cmd) where T : ITableBacked, new() {
 			var value = new T();
+			bool gotValue = false;
 			using (var r = cmd.ExecuteReader()) {
 				if (r.Read()) {
 					value.BindReader(r);
+					gotValue = true;
 				}
 			}
-			return value;
+			if (gotValue) {
+				return value;
+			}
+
+			return default(T);
 		}
 
 
@@ -80,7 +88,31 @@ namespace GoorooIO.SqlBacked {
 		public static int ExecuteSql(this DbConnection cn, string sql, object ps) {
 			using (var cmd = cn.CreateCommand()) {
 				cmd.CommandText = sql;
-				cmd.CommandTimeout = 60000;
+				cmd.CommandTimeout = DEFAULT_TIMEOUT;
+				if (ps != null) {
+					foreach (var p in ps.GetType().GetProperties()) {
+						cmd.Parameters.Add(GetParameter(cmd, "@" + p.Name, p.GetValue(ps)));
+					}
+				}
+				return cmd.ExecuteNonQuery();
+			}
+		}
+
+
+		/// <summary>
+		/// Executes an SQL Command using the supplied connection and sql query.
+		/// The object, "ps" will be reflected such that its properties are bound
+		/// as named parameters to the query.
+		/// </summary>
+		/// <param name="cn"></param>
+		/// <param name="sql"></param>
+		/// <param name="ps"></param>
+		/// <returns></returns>
+		public static int ExecuteSql(this DbConnection cn, DbTransaction txn, string sql, object ps) {
+			using (var cmd = cn.CreateCommand()) {
+				cmd.CommandText = sql;
+				cmd.CommandTimeout = DEFAULT_TIMEOUT;
+				cmd.Transaction = txn;
 				if (ps != null) {
 					foreach (var p in ps.GetType().GetProperties()) {
 						cmd.Parameters.Add(GetParameter(cmd, "@" + p.Name, p.GetValue(ps)));
@@ -93,7 +125,7 @@ namespace GoorooIO.SqlBacked {
 		public static async Task<int> ExecuteSqlAsync(this DbConnection cn, string sql, object ps) {
 			using (var cmd = cn.CreateCommand()) {
 				cmd.CommandText = sql;
-				cmd.CommandTimeout = 60000;
+				cmd.CommandTimeout = DEFAULT_TIMEOUT;
 				if (ps != null) {
 					foreach (var p in ps.GetType().GetProperties()) {
 						cmd.Parameters.Add(GetParameter(cmd, "@" + p.Name, p.GetValue(ps)));
@@ -173,6 +205,7 @@ namespace GoorooIO.SqlBacked {
 
 			using (var cmd = cn.CreateCommand()) {
 				cmd.CommandText = obj.UpdateSql;
+				cmd.CommandTimeout = DEFAULT_TIMEOUT;
 				cmd.Transaction = txn;
 				obj.BindCommand(cmd);
 
@@ -191,6 +224,7 @@ namespace GoorooIO.SqlBacked {
 
 			using (var cmd = cn.CreateCommand()) {
 				cmd.CommandText = obj.UpdateSql;
+				cmd.CommandTimeout = DEFAULT_TIMEOUT;
 				cmd.Transaction = txn;
 				obj.BindCommand(cmd);
 
@@ -217,6 +251,7 @@ namespace GoorooIO.SqlBacked {
 			using (var cmd = cn.CreateCommand()) {
 				cmd.CommandText = string.Format("DELETE FROM {0}.{1} WHERE {2}=@PkColumn", obj.SchemaName, obj.TableName, obj.PrimaryKeyColumn);
 				cmd.Transaction = txn;
+				cmd.CommandTimeout = DEFAULT_TIMEOUT;
 
 				// Make sure we bind the WHERE condition 
 				cmd.Parameters.Add(GetParameter(cmd, "PkColumn", obj.PrimaryKey));
@@ -234,6 +269,7 @@ namespace GoorooIO.SqlBacked {
 			using (var cmd = cn.CreateCommand()) {
 				cmd.CommandText = string.Format("DELETE FROM {0}.{1} WHERE {2}=@PkColumn", obj.SchemaName, obj.TableName, obj.PrimaryKeyColumn);
 				cmd.Transaction = txn;
+				cmd.CommandTimeout = DEFAULT_TIMEOUT;
 
 				// Make sure we bind the WHERE condition 
 				cmd.Parameters.Add(GetParameter(cmd, "PkColumn", obj.PrimaryKey));
@@ -261,10 +297,107 @@ namespace GoorooIO.SqlBacked {
 		}
 
 
-		public static string DumpJsonRows(this DbConnection cn, string sql, object ps) {
+		public static List<T> DumpList<T>(this DbConnection cn, string sql, object ps) {
 			using (var cmd = cn.CreateCommand()) {
 				cmd.CommandText = sql;
-				cmd.CommandTimeout = 10;
+				cmd.CommandTimeout = DEFAULT_TIMEOUT;
+				if (ps != null) {
+					foreach (var p in ps.GetType().GetProperties()) {
+						cmd.Parameters.Add(GetParameter(cmd, "@" + p.Name, p.GetValue(ps)));
+					}
+				}
+				using (var reader = cmd.ExecuteReader()) {
+					var list = new List<T>();
+					while (reader.Read()) {
+						if (reader[0] != DBNull.Value) {
+							list.Add((T)reader[0]);
+						}
+					}
+					return list;
+				}
+			}
+		}
+
+
+		public static string DumpTSVFormatted(this DbConnection cn, string sql, object ps) {
+			StringBuilder output = new StringBuilder();
+
+			using (var cmd = cn.CreateCommand()) {
+				cmd.CommandTimeout = DEFAULT_TIMEOUT;
+				cmd.CommandText = sql;
+				if (ps != null) {
+					foreach (var p in ps.GetType().GetProperties()) {
+						cmd.Parameters.Add(GetParameter(cmd, "@" + p.Name, p.GetValue(ps)));
+					}
+				}
+				using (var reader = cmd.ExecuteReader()) {
+					bool isFirst = true;
+					int rowCount = 0;
+					while (reader.Read()) {
+
+						if (isFirst) {
+							//MungLog.Log.LogEvent("MungedDataWriter.Write", "Retreiving...");
+							// Recycle the same array so we're not constantly allocating
+
+							List<string> names = new List<string>();
+
+							for (var i = 0; i < reader.FieldCount; i++) {
+								names.Add(reader.GetName(i));
+							}
+							var namesLine = string.Join("\t", names);
+							string underline = new String('-', namesLine.Length + (names.Count * 3));
+
+							output.AppendLine(underline);
+							output.AppendLine(namesLine);
+							output.AppendLine(underline);
+
+							isFirst = false;
+						}
+						for (var i = 0; i < reader.FieldCount; i++) {
+							output.AppendFormat("{0}\t", Serialize(reader[i]));
+						}
+						output.Append("\n");
+
+
+						rowCount++;
+
+					}
+				}
+			}
+
+
+			return output.ToString();
+		}
+
+		public static string Serialize(object o) {
+			if (o is DateTime) {
+				return ((DateTime)o).ToString("yyyy-MM-dd HH':'mm':'ss");
+
+			}
+			if (o == DBNull.Value) {
+				return "NULL";
+			}
+
+			if (o is string) {
+
+				// Strings are escaped 
+				return "\"" + Escape(o.ToString()) + "\"";
+
+			}
+			return o.ToString();
+
+		}
+		private static string Escape(string unescaped) {
+			return unescaped
+				.Replace("\\", "\\" + "\\")		// '\' -> '\\'
+				.Replace("\"", "\\" + "\"");		// '"' -> '""'
+		}
+
+
+		public static string DumpJsonRows(this DbConnection cn, string sql, object ps) {
+			using (var cmd = cn.CreateCommand()) {
+				cmd.CommandTimeout = DEFAULT_TIMEOUT;
+				cmd.CommandText = sql;
 				if (ps != null) {
 					foreach (var p in ps.GetType().GetProperties()) {
 						cmd.Parameters.Add(GetParameter(cmd, "@" + p.Name, p.GetValue(ps)));
@@ -296,6 +429,7 @@ namespace GoorooIO.SqlBacked {
 
 		public static DataTable DumpDataTable(this DbConnection cn, string sql, object ps) {
 			using (var cmd = cn.CreateCommand()) {
+				cmd.CommandTimeout = DEFAULT_TIMEOUT;
 				cmd.CommandText = sql;
 				if (ps != null) {
 					foreach (var p in ps.GetType().GetProperties()) {
@@ -331,6 +465,7 @@ namespace GoorooIO.SqlBacked {
 			var values = new List<T>();
 			string sql = string.Format("SELECT * FROM {0}.{1} WHERE {2} @x", first.SchemaName, first.TableName, condition);
 			using (var cmd = cn.CreateCommand()) {
+				cmd.CommandTimeout = DEFAULT_TIMEOUT;
 				cmd.CommandText = sql;
 				cmd.Parameters.Add(GetParameter(cmd, "@x", param));
 				using (var r = await cmd.ExecuteReaderAsync()) {
@@ -349,6 +484,7 @@ namespace GoorooIO.SqlBacked {
 
 			var values = new List<T>();
 			using (var cmd = cn.CreateCommand()) {
+				cmd.CommandTimeout = DEFAULT_TIMEOUT;
 				cmd.CommandText = sql;
 				if (ps != null) {
 					foreach (var p in ps.GetType().GetProperties()) {
@@ -371,6 +507,7 @@ namespace GoorooIO.SqlBacked {
 		public static async Task<DataTable> DumpDataTableAsync(this DbConnection cn, string sql, object ps) {
 			using (var cmd = cn.CreateCommand()) {
 				cmd.CommandText = sql;
+				cmd.CommandTimeout = DEFAULT_TIMEOUT;
 				if (ps != null) {
 					foreach (var p in ps.GetType().GetProperties()) {
 						cmd.Parameters.Add(GetParameter(cmd, "@" + p.Name, p.GetValue(ps)));
@@ -388,7 +525,7 @@ namespace GoorooIO.SqlBacked {
 		public static async Task<string> DumpJsonRowsAsync(this DbConnection cn, string sql, object ps) {
 			using (var cmd = cn.CreateCommand()) {
 				cmd.CommandText = sql;
-				cmd.CommandTimeout = 10;
+				cmd.CommandTimeout = DEFAULT_TIMEOUT;
 				if (ps != null) {
 					foreach (var p in ps.GetType().GetProperties()) {
 						cmd.Parameters.Add(GetParameter(cmd, "@" + p.Name, p.GetValue(ps)));
