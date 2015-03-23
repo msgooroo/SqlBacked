@@ -45,6 +45,7 @@
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Runtime.Caching" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -53,6 +54,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="code\BatchContext.cs" />
+    <Compile Include="code\CacheProviders\MemoryCacheProvider.cs" />
     <Compile Include="code\CacheProviders\RedisCacheProvider.cs" />
     <Compile Include="code\CacheConnector.cs" />
     <Compile Include="code\DatabaseConnector.cs" />
