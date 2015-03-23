@@ -102,6 +102,7 @@ namespace PocoGenerator {
 
 				}
 				File.Copy(MapPath(@"..\Code\ITableBacked.cs"), path + @"\ITableBacked.cs", true);
+				File.Copy(MapPath(@"..\Code\PerformanceLogger.cs"), path + @"\PerformanceLogger.cs", true);
 				File.Copy(MapPath(@"..\Code\ICacheProvider.cs"), path + @"\ICacheProvider.cs", true);
 				File.Copy(MapPath(@"..\Code\CacheConnector.cs"), path + @"\CacheConnector.cs", true);
 				File.Copy(MapPath(@"..\Code\DatabaseConnector.cs"), path + @"\DatabaseConnector.cs", true);
