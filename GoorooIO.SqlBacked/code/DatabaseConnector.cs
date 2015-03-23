@@ -398,6 +398,7 @@ namespace GoorooIO.SqlBacked {
 			using (var cmd = cn.CreateCommand()) {
 				cmd.CommandTimeout = DEFAULT_TIMEOUT;
 				cmd.CommandText = sql;
+				cmd.CommandTimeout = 30;
 				if (ps != null) {
 					foreach (var p in ps.GetType().GetProperties()) {
 						cmd.Parameters.Add(GetParameter(cmd, "@" + p.Name, p.GetValue(ps)));
