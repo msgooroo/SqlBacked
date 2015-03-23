@@ -1,5 +1,6 @@
-/MSGooroo.SqlBacked/App.config
-/MSGooroo.SqlBacked/bin
-/MSGooroo.SqlBacked/obj
-/packages
-/MSGooroo.SqlBacked/MSGooroo.SqlBacked.csproj.user
+/bin/*.*
+/packages/*.*
+/GoorooIO.SqlBacked/GoorooIO.SqlBacked.csproj.user
+/GoorooIO.SqlBacked/bin/*.*
+/GoorooIO.SqlBacked/obj/*.*
+/GoorooIO.SqlBacked/App.config
