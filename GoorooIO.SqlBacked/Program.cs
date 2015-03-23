@@ -119,7 +119,7 @@ namespace PocoGenerator {
 				if (cacheType == CacheType.AzureCache) {
 					File.Copy(MapPath(@"..\Code\CacheProviders\AzureCacheProvider.cs"), path + @"\AzureCacheProvider.cs", true);
 				}
-				if (cacheType == CacheType.Redis) {
+				if (cacheType == CacheType.InProcess) {
 					File.Copy(MapPath(@"..\Code\CacheProviders\MemoryCacheProvider.cs"), path + @"\MemoryCacheProvider.cs", true);
 				}
 
