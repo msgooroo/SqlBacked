@@ -14,6 +14,7 @@ namespace PocoGenerator {
 		public enum CacheType {
 			None,
 			AzureCache,
+			InProcess,
 			Redis
 		}
 
@@ -42,7 +43,10 @@ namespace PocoGenerator {
 				type = CacheType.Redis;
 			} else if (args[2] == "azure") {
 				type = CacheType.AzureCache;
-			
+
+			} else if (args[2] == "inproc") {
+				type = CacheType.InProcess;
+
 			} else if (args[2] != "none") {
 				Console.WriteLine("Unknown / Invalid Cache Type, please use one of ['none', 'redis', 'azure'].\n");
 				PrintUsage();
@@ -114,6 +118,9 @@ namespace PocoGenerator {
 
 				if (cacheType == CacheType.AzureCache) {
 					File.Copy(MapPath(@"..\Code\CacheProviders\AzureCacheProvider.cs"), path + @"\AzureCacheProvider.cs", true);
+				}
+				if (cacheType == CacheType.Redis) {
+					File.Copy(MapPath(@"..\Code\CacheProviders\MemoryCacheProvider.cs"), path + @"\MemoryCacheProvider.cs", true);
 				}
 
 			} catch (Exception ex) {
