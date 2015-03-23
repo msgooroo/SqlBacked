@@ -58,7 +58,7 @@
     <Compile Include="code\DatabaseConnector.cs" />
     <Compile Include="code\ICacheProvider.cs" />
     <Compile Include="code\ITableBacked.cs" />
-    <Compile Include="PerformanceLogger.cs" />
+    <Compile Include="code\PerformanceLogger.cs" />
     <Compile Include="SqlBackedColumn.cs" />
     <Compile Include="SqlBackedTable.cs" />
     <Compile Include="Program.cs" />
