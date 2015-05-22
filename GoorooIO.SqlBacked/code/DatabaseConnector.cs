@@ -319,7 +319,7 @@ namespace GoorooIO.SqlBacked {
 			}
 		}
 
-		public static string DumpTSVFormatted(this DbConnection cn, StreamWriter writer, string sql, object ps) {
+		public static int DumpTSVFormatted(this DbConnection cn, StreamWriter writer, string sql, object ps) {
 
 			using (var cmd = cn.CreateCommand()) {
 				cmd.CommandTimeout = DEFAULT_TIMEOUT;
@@ -329,9 +329,9 @@ namespace GoorooIO.SqlBacked {
 						cmd.Parameters.Add(GetParameter(cmd, "@" + p.Name, p.GetValue(ps)));
 					}
 				}
+				int rowCount = 0;
 				using (var reader = cmd.ExecuteReader()) {
 					bool isFirst = true;
-					int rowCount = 0;
 					string[] row = null;
 					while (reader.Read()) {
 
@@ -362,9 +362,9 @@ namespace GoorooIO.SqlBacked {
 
 					}
 				}
+				return rowCount;
 			}
 
-			return writer.ToString();
 		}
 
 		public static string DumpTSVFormatted(this DbConnection cn, string sql, object ps) {
