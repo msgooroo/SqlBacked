@@ -5,7 +5,6 @@ using System.Linq;
 using System.Text;
 using System.Data;
 using System.Threading.Tasks;
-using System.IO;
 using Newtonsoft.Json;
 
 namespace GoorooIO.SqlBacked {
@@ -74,6 +73,59 @@ namespace GoorooIO.SqlBacked {
 		}
 
 
+
+		/// <summary>
+		/// Uses reflection to try to bind the results of a query to the 
+		/// type provided
+		/// </summary>
+		/// <param name="cn"></param>
+		/// <param name="sql"></param>
+		/// <param name="ps"></param>
+		/// <returns></returns>
+		public static List<T> ExecuteAnonymousSql<T>(this DbConnection cn, string sql, object ps) where T : new() {
+			using (var cmd = cn.CreateCommand()) {
+				cmd.CommandText = sql;
+				cmd.CommandTimeout = DEFAULT_TIMEOUT;
+				if (ps != null) {
+					foreach (var p in ps.GetType().GetProperties()) {
+						cmd.Parameters.Add(GetParameter(cmd, "@" + p.Name, p.GetValue(ps)));
+					}
+				}
+
+				var type = typeof(T).GetType();
+
+				var properties = type.GetProperties().ToDictionary(x => x.Name);
+				var fields = type.GetProperties().ToDictionary(x => x.Name);
+
+				HashSet<string> columnNames = null;
+				List<T> results = new List<T>();
+				using (var r = cmd.ExecuteReader()) {
+					while (r.Read()) {
+						var obj = new T();
+
+						if (columnNames == null) {
+							columnNames = new HashSet<string>();
+							for (var i = 0; i < r.FieldCount; i++) {
+								columnNames.Add(r.GetName(i));
+							}
+						}
+
+						foreach (var p in properties) {
+							if (columnNames.Contains(p.Key)) {
+								p.Value.SetValue(obj, r[p.Key]);
+							}
+						}
+						foreach (var p in fields) {
+							if (columnNames.Contains(p.Key)) {
+								p.Value.SetValue(obj, r[p.Key]);
+							}
+						}
+						results.Add(obj);
+					}
+				}
+				return results;
+			}
+		}
 
 
 
@@ -319,53 +371,20 @@ namespace GoorooIO.SqlBacked {
 			}
 		}
 
-		public static int DumpTSVFormatted(this DbConnection cn, StreamWriter writer, string sql, object ps) {
 
+		public static DbDataReader DumpReader(this DbConnection cn, string sql, object ps) {
 			using (var cmd = cn.CreateCommand()) {
-				cmd.CommandTimeout = DEFAULT_TIMEOUT;
 				cmd.CommandText = sql;
+				cmd.CommandTimeout = DEFAULT_TIMEOUT;
 				if (ps != null) {
 					foreach (var p in ps.GetType().GetProperties()) {
 						cmd.Parameters.Add(GetParameter(cmd, "@" + p.Name, p.GetValue(ps)));
 					}
 				}
-				int rowCount = 0;
-				using (var reader = cmd.ExecuteReader()) {
-					bool isFirst = true;
-					string[] row = null;
-					while (reader.Read()) {
-
-						if (isFirst) {
-							//MungLog.Log.LogEvent("MungedDataWriter.Write", "Retreiving...");
-							// Recycle the same array so we're not constantly allocating
-
-							List<string> names = new List<string>();
-
-							for (var i = 0; i < reader.FieldCount; i++) {
-								names.Add(reader.GetName(i));
-							}
-							var namesLine = string.Join("\t", names);
-							string underline = new String('-', namesLine.Length + (names.Count * 3));
-
-							writer.WriteLine(namesLine);
-							row = new string[reader.FieldCount];
-
-							isFirst = false;
-						}
-						for (var i = 0; i < reader.FieldCount; i++) {
-							row[i] = Serialize(reader[i]);
-							writer.WriteLine(string.Join("\t", row[i]));
-						}
-
-
-						rowCount++;
-
-					}
-				}
-				return rowCount;
+				return cmd.ExecuteReader();
 			}
-
 		}
+
 
 		public static string DumpTSVFormatted(this DbConnection cn, string sql, object ps) {
 			StringBuilder output = new StringBuilder();
@@ -412,6 +431,8 @@ namespace GoorooIO.SqlBacked {
 					}
 				}
 			}
+
+
 			return output.ToString();
 		}
 
@@ -440,41 +461,40 @@ namespace GoorooIO.SqlBacked {
 		}
 
 
-
 		public static string DumpJsonRows(this DbConnection cn, string sql, object ps) {
 			using (var cmd = cn.CreateCommand()) {
 				cmd.CommandTimeout = DEFAULT_TIMEOUT;
 				cmd.CommandText = sql;
+				cmd.CommandTimeout = 30;
 				if (ps != null) {
 					foreach (var p in ps.GetType().GetProperties()) {
 						cmd.Parameters.Add(GetParameter(cmd, "@" + p.Name, p.GetValue(ps)));
 					}
 				}
 				using (var reader = cmd.ExecuteReader()) {
-					var result = new DataResult(reader);
-					return result.GetJson();
+					// Field names
+					List<string> columnNames =
+						Enumerable.Range(0, reader.FieldCount)
+							.Select(x => reader.GetName(x))
+							.ToList();
+					List<Dictionary<string, string>> data = new List<Dictionary<string, string>>();
+					while (reader.Read()) {
+						Dictionary<string, string> rowData = new Dictionary<string, string>();
+						for (var i = 0; i < reader.FieldCount; i++) {
+							if (reader[i].GetType() == typeof(DateTime)) {
+								// Use ISO time
+								rowData[columnNames[i]] = ((DateTime)reader[i]).ToString("s");
+							} else {
+								rowData[columnNames[i]] = reader[i].ToString();
+							}
+						}
+						data.Add(rowData);
+					}
+					return JsonConvert.SerializeObject(new { ColumnNames = columnNames, Rows = data });
 				}
 			}
-		}
-		public static DataResult DumpResult(this DbConnection cn, string sql, object ps) {
-			return DumpResult(cn, sql, ps, DEFAULT_TIMEOUT);
 		}
 
-		public static DataResult DumpResult(this DbConnection cn, string sql, object ps, int timeout) {
-			using (var cmd = cn.CreateCommand()) {
-				cmd.CommandText = sql;
-				cmd.CommandTimeout = timeout;
-				if (ps != null) {
-					foreach (var p in ps.GetType().GetProperties()) {
-						cmd.Parameters.Add(GetParameter(cmd, "@" + p.Name, p.GetValue(ps)));
-					}
-				}
-				using (var reader = cmd.ExecuteReader()) {
-					var result = new DataResult(reader);
-					return result;
-				}
-			}
-		}
 
 		public static DataTable DumpDataTable(this DbConnection cn, string sql, object ps) {
 			using (var cmd = cn.CreateCommand()) {

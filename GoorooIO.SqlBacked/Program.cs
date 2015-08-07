@@ -110,8 +110,8 @@ namespace PocoGenerator {
 				File.Copy(MapPath(@"..\Code\ICacheProvider.cs"), path + @"\ICacheProvider.cs", true);
 				File.Copy(MapPath(@"..\Code\CacheConnector.cs"), path + @"\CacheConnector.cs", true);
 				File.Copy(MapPath(@"..\Code\DatabaseConnector.cs"), path + @"\DatabaseConnector.cs", true);
-                File.Copy(MapPath(@"..\Code\BatchContext.cs"), path + @"\BatchContext.cs", true);
-                File.Copy(MapPath(@"..\Code\DataResult.cs"), path + @"\DataResult.cs", true);
+				File.Copy(MapPath(@"..\Code\DataReaderExtensions.cs"), path + @"\DataReaderExtensions.cs", true);
+				File.Copy(MapPath(@"..\Code\BatchContext.cs"), path + @"\BatchContext.cs", true);
 
 				if (cacheType == CacheType.Redis) {
 					File.Copy(MapPath(@"..\Code\CacheProviders\RedisCacheProvider.cs"), path + @"\RedisCacheProvider.cs", true);
