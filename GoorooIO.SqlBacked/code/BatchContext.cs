@@ -15,12 +15,15 @@ namespace GoorooIO.SqlBacked {
 
 		private List<Action> _completeCallbacks;
 		private List<GetReference> _requests;
-		private DbConnection _db;
+		private Func<DbConnection> _dbProvider;
 		private ICacheProvider _cache;
 
 
-		public BatchContext(DbConnection db, ICacheProvider cache) {
-			_db = db;
+		public BatchContext(Func<DbConnection> dbProvider, ICacheProvider cache) {
+			_dbProvider = dbProvider;
+
+
+
 			_cache = cache;
 			_requests = new List<GetReference>();
 			_completeCallbacks = new List<Action>();
@@ -40,7 +43,7 @@ namespace GoorooIO.SqlBacked {
 		public void ScheduleSql<T>(string sql, object ps, Action<List<ITableBacked>> callback) where T : class, ITableBacked, new() {
 			T first = new T();
 			string cacheKey = first.SqlCacheKey(sql, ps);
-			DbCommand cmd = _db.GetSqlCommand<T>(sql, ps);
+			DbCommand cmd = _dbProvider().GetSqlCommand<T>(sql, ps);
 
 			_requests.Add(new GetReference(cmd, cacheKey, typeof(T), false, callback));
 		}
@@ -48,7 +51,7 @@ namespace GoorooIO.SqlBacked {
 		public void Schedule<T>(int primaryKey, Action<List<ITableBacked>> callback) where T : class, ITableBacked, new() {
 			T first = new T();
 			string cacheKey = first.SingleCacheKey(primaryKey);
-			DbCommand cmd = _db.GetCommand<T>(primaryKey);
+			DbCommand cmd = _dbProvider().GetCommand<T>(primaryKey);
 
 			_requests.Add(new GetReference(cmd, cacheKey, typeof(T), false, callback));
 		}
@@ -56,7 +59,7 @@ namespace GoorooIO.SqlBacked {
 		public void Schedule<T>(string condition, object ps, Action<List<ITableBacked>> callback) where T : class, ITableBacked, new() {
 			T first = new T();
 			string cacheKey = first.CacheKey<T>(condition, ps);
-			DbCommand cmd = _db.GetCommand<T>(condition, ps);
+			DbCommand cmd = _dbProvider().GetCommand<T>(condition, ps);
 
 			_requests.Add(new GetReference(cmd, cacheKey, typeof(T), false, callback));
 		}
@@ -68,7 +71,7 @@ namespace GoorooIO.SqlBacked {
 			var uncasted = new List<object>();
 
 			foreach (var r in _requests) {
-				if (r.Result == null) {
+				if (r.Result == null || r.Result.Count == 0) {
 					// Missed it in the cache, so do it in the database...
 					if (r.ExpectSingleValue) {
 						MethodInfo method = typeof(DatabaseConnector).GetMethod("GetSingle");
@@ -82,9 +85,11 @@ namespace GoorooIO.SqlBacked {
 					} else {
 						MethodInfo method = typeof(DatabaseConnector).GetMethod("GetList");
 						MethodInfo genericMethod = method.MakeGenericMethod(r.ResultType);
-						var raw =  genericMethod.Invoke(null, new object[] { r.Command });
-						
-						r.Result = ((IEnumerable) raw).Cast<ITableBacked>().ToList();
+
+						var raw = genericMethod.Invoke(null, new object[] { r.Command });
+
+						r.Result = ((IEnumerable)raw).Cast<ITableBacked>().ToList();
+
 
 						needUpdating.Add(r);
 						uncasted.Add(raw);
@@ -93,14 +98,23 @@ namespace GoorooIO.SqlBacked {
 				}
 
 				r.Callback(r.Result);
+
+				// Clean up references to new connections
+				if (r.Command != null) {
+					if (r.Command.Connection != null) {
+						r.Command.Connection.Dispose();
+					}
+					r.Command.Dispose();
+				}
+
 			}
 
-			foreach(var cb in _completeCallbacks){
+			foreach (var cb in _completeCallbacks) {
 				cb();
 			}
 
 			Task.Run(() => {
-				for (int i = 0; i < needUpdating.Count; i++ ) {
+				for (int i = 0; i < needUpdating.Count; i++) {
 					var r = needUpdating[i];
 					MethodInfo method = typeof(ICacheProvider).GetMethod("Set");
 
