@@ -29,7 +29,7 @@ namespace GoorooIO.SqlBacked {
 			}
 
 			using (var log = new PerformanceLogger("redis-get-many", _loggingPersistence)) {
-				
+
 				var values = _db.StringGet(
 						req.Select(x => (RedisKey)x.CacheKey)
 							.ToArray()
@@ -53,6 +53,14 @@ namespace GoorooIO.SqlBacked {
 
 
 		#region ICacheProvider Members
+		public bool SetExpiry(string cacheKey, TimeSpan timeout) {
+			if (_db == null) {
+				return false;
+			}
+			_db.KeyExpire(cacheKey, timeout);
+			return true;
+		}
+
 
 		public bool Set<T>(string cacheKey, T value) where T : class {
 			if (_db == null) {
@@ -62,7 +70,6 @@ namespace GoorooIO.SqlBacked {
 				using (var log2 = new PerformanceLogger("redis-set|" + cacheKey, _loggingPersistence)) {
 					byte[] buffer = Serialize(value);
 					_db.StringSet(cacheKey, buffer);
-
 					return true;
 				}
 			}

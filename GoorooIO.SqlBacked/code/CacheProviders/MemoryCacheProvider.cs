@@ -104,5 +104,10 @@ namespace GoorooIO.SqlBacked {
 		#endregion
 
 
+
+
+		public bool SetExpiry(string cacheKey, TimeSpan timeout) {
+			throw new NotImplementedException();
+		}
 	}
 }

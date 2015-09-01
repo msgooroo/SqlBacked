@@ -62,8 +62,31 @@ namespace PocoGenerator {
 				}
 			}
 
+
+
+
 			if (!found) {
 				Console.WriteLine("No connection strings were found in the App.config, no SqlBacked objects written");
+			}
+
+			File.Copy(MapPath(@"..\Code\ITableBacked.cs"), path + @"\ITableBacked.cs", true);
+			File.Copy(MapPath(@"..\Code\PerformanceLogger.cs"), path + @"\PerformanceLogger.cs", true);
+			File.Copy(MapPath(@"..\Code\ICacheProvider.cs"), path + @"\ICacheProvider.cs", true);
+			File.Copy(MapPath(@"..\Code\CacheConnector.cs"), path + @"\CacheConnector.cs", true);
+			File.Copy(MapPath(@"..\Code\DataResult.cs"), path + @"\DataResult.cs", true);
+			File.Copy(MapPath(@"..\Code\DatabaseConnector.cs"), path + @"\DatabaseConnector.cs", true);
+			File.Copy(MapPath(@"..\Code\DataReaderExtensions.cs"), path + @"\DataReaderExtensions.cs", true);
+			File.Copy(MapPath(@"..\Code\BatchContext.cs"), path + @"\BatchContext.cs", true);
+
+			if (type == CacheType.Redis) {
+				File.Copy(MapPath(@"..\Code\CacheProviders\RedisCacheProvider.cs"), path + @"\RedisCacheProvider.cs", true);
+			}
+
+			if (type == CacheType.AzureCache) {
+				File.Copy(MapPath(@"..\Code\CacheProviders\AzureCacheProvider.cs"), path + @"\AzureCacheProvider.cs", true);
+			}
+			if (type == CacheType.InProcess) {
+				File.Copy(MapPath(@"..\Code\CacheProviders\MemoryCacheProvider.cs"), path + @"\MemoryCacheProvider.cs", true);
 			}
 		}
 
@@ -104,24 +127,6 @@ namespace PocoGenerator {
 						}
 					}
 
-				}
-				File.Copy(MapPath(@"..\Code\ITableBacked.cs"), path + @"\ITableBacked.cs", true);
-				File.Copy(MapPath(@"..\Code\PerformanceLogger.cs"), path + @"\PerformanceLogger.cs", true);
-				File.Copy(MapPath(@"..\Code\ICacheProvider.cs"), path + @"\ICacheProvider.cs", true);
-				File.Copy(MapPath(@"..\Code\CacheConnector.cs"), path + @"\CacheConnector.cs", true);
-				File.Copy(MapPath(@"..\Code\DatabaseConnector.cs"), path + @"\DatabaseConnector.cs", true);
-				File.Copy(MapPath(@"..\Code\DataReaderExtensions.cs"), path + @"\DataReaderExtensions.cs", true);
-				File.Copy(MapPath(@"..\Code\BatchContext.cs"), path + @"\BatchContext.cs", true);
-
-				if (cacheType == CacheType.Redis) {
-					File.Copy(MapPath(@"..\Code\CacheProviders\RedisCacheProvider.cs"), path + @"\RedisCacheProvider.cs", true);
-				}
-
-				if (cacheType == CacheType.AzureCache) {
-					File.Copy(MapPath(@"..\Code\CacheProviders\AzureCacheProvider.cs"), path + @"\AzureCacheProvider.cs", true);
-				}
-				if (cacheType == CacheType.InProcess) {
-					File.Copy(MapPath(@"..\Code\CacheProviders\MemoryCacheProvider.cs"), path + @"\MemoryCacheProvider.cs", true);
 				}
 
 			} catch (Exception ex) {

@@ -60,6 +60,7 @@
     <Compile Include="code\CacheConnector.cs" />
     <Compile Include="code\DatabaseConnector.cs" />
     <Compile Include="code\DataReaderExtensions.cs" />
+    <Compile Include="code\DataResult.cs" />
     <Compile Include="code\ICacheProvider.cs" />
     <Compile Include="code\ReadOnlyTableBacked.cs" />
     <Compile Include="code\ITableBacked.cs" />

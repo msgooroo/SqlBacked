@@ -37,7 +37,7 @@ namespace GoorooIO.SqlBacked {
 		//Task<bool> SetAsync<T>(string cacheKey, T value) where T : class;
 
 		T Get<T>(string cacheKey) where T : class;
-		bool SetExpiry(string cacheKey);
+		bool SetExpiry(string cacheKey, TimeSpan timeout);
 
 		//Task<T> GetAsync<T>(string cacheKey) where T : class;
 
