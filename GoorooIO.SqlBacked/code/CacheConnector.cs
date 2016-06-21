@@ -9,6 +9,11 @@ using System.Threading.Tasks;
 namespace GoorooIO.SqlBacked {
 
 	public static class CacheConnector {
+
+
+
+
+
 		/// <summary>
 		/// Gets a list of items using the SQL supplied, trying the cache first, then the database.
 		/// The object passed in as "ps" will be reflected on, and its properties used as parameters.
@@ -154,7 +159,10 @@ namespace GoorooIO.SqlBacked {
 			var db = DatabaseConnector.Get<T>(cn, primaryKey);
 			if (cache != null) {
 				Task.Run(() => {
-					cache.Set(cacheKey, db);
+					try {
+						cache.Set(cacheKey, db);
+						cache.SetExpiry(cacheKey, new TimeSpan(0, 1, 0, 0));
+					} catch { }
 				});
 			}
 			return db;
@@ -246,7 +254,10 @@ namespace GoorooIO.SqlBacked {
 			if (cache != null) {
 
 				Task.Run(() => {
-					cache.Set(cacheKey, items);
+					try {
+						cache.Set(cacheKey, items);
+						cache.SetExpiry(cacheKey, new TimeSpan(0, 1, 0, 0));
+					} catch { }
 				});
 			}
 
@@ -373,7 +384,7 @@ namespace GoorooIO.SqlBacked {
 
 
 		public static string DumpJsonRowsCached(this DbConnection cn, ICacheProvider cache, string sql, object ps) {
-			var cacheKey = SqlCacheKey("custom_json", sql, ps);
+			var cacheKey = SqlCacheKey("exp|custom_json", sql, ps);
 			if (cache != null) {
 				var cached = cache.Get<string>(cacheKey);
 				if (cached != null) {
@@ -384,7 +395,10 @@ namespace GoorooIO.SqlBacked {
 
 			if (cache != null) {
 				Task.Run(() => {
-					cache.Set<string>(cacheKey, json);
+					try {
+						cache.Set<string>(cacheKey, json);
+						cache.SetExpiry(cacheKey, new TimeSpan(0, 1, 0, 0));
+					} catch { }
 				});
 			}
 			return json;
@@ -409,13 +423,17 @@ namespace GoorooIO.SqlBacked {
 		//}
 
 		public static string DumpJsonRowsAndRefreshCached(this DbConnection cn, ICacheProvider cache, string sql, object ps) {
-			var cacheKey = SqlCacheKey("custom_json", sql, ps);
+			var cacheKey = SqlCacheKey("exp|custom_json", sql, ps);
 
 			string json = DatabaseConnector.DumpJsonRows(cn, sql, ps);
 
 			if (cache != null) {
 				Task.Run(() => {
-					cache.Set<string>(cacheKey, json);
+					try {
+						cache.Set<string>(cacheKey, json);
+						cache.SetExpiry(cacheKey, new TimeSpan(0, 1, 0, 0));
+
+					} catch { }
 				});
 			}
 			return json;
@@ -435,8 +453,25 @@ namespace GoorooIO.SqlBacked {
 
 
 
-		public static DataTable DumpDataTableCached(this DbConnection cn, ICacheProvider cache, string sql, object ps) {
-			var cacheKey = SqlCacheKey("custom_datatable", sql, ps);
+		//public static DataTable DumpDataTableCached(this DbConnection cn, ICacheProvider cache, string sql, object ps, TimeSpan expiry) {
+		//	var cacheKey = SqlCacheKey("custom_datatable", sql, ps);
+		//	if (cache != null) {
+		//		var cached = cache.Get<DataTable>(cacheKey);
+		//		if (cached != null) {
+		//			return cached;
+		//		}
+		//	}
+		//	DataTable tbl = DatabaseConnector.DumpDataTable(cn, sql, ps);
+		//	if (cache != null) {
+		//		Task.Run(() => {
+		//			cache.Set<DataTable>(cacheKey, tbl);
+		//			cache.SetExpiry(cacheKey, expiry);
+		//		});
+		//	}
+		//	return tbl;
+		//}
+		public static DataTable DumpDataTableCached(this DbConnection cn, ICacheProvider cache, string sql, object ps, TimeSpan expires) {
+			var cacheKey = SqlCacheKey("exp|custom_datatable", sql, ps);
 			if (cache != null) {
 				var cached = cache.Get<DataTable>(cacheKey);
 				if (cached != null) {
@@ -446,7 +481,10 @@ namespace GoorooIO.SqlBacked {
 			DataTable tbl = DatabaseConnector.DumpDataTable(cn, sql, ps);
 			if (cache != null) {
 				Task.Run(() => {
-					cache.Set<DataTable>(cacheKey, tbl);
+					try {
+						cache.Set<DataTable>(cacheKey, tbl);
+						cache.SetExpiry(cacheKey, expires);
+					} catch { }
 				});
 			}
 			return tbl;
@@ -468,13 +506,17 @@ namespace GoorooIO.SqlBacked {
 		//}
 
 		public static DataTable DumpDataTableAndRefreshCached(this DbConnection cn, ICacheProvider cache, string sql, object ps) {
-			var cacheKey = SqlCacheKey("custom_datatable", sql, ps);
+			var cacheKey = SqlCacheKey("exp|custom_datatable", sql, ps);
 
 			DataTable tbl = DatabaseConnector.DumpDataTable(cn, sql, ps);
 
 			if (cache != null) {
 				Task.Run(() => {
-					cache.Set<DataTable>(cacheKey, tbl);
+					try {
+						cache.Set<DataTable>(cacheKey, tbl);
+						cache.SetExpiry(cacheKey, new TimeSpan(0, 1, 0, 0));
+
+					} catch { }
 				});
 			}
 			return tbl;

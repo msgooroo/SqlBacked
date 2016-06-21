@@ -9,6 +9,7 @@ using Newtonsoft.Json;
 namespace GoorooIO.SqlBacked {
     using RowData = Dictionary<string, string>;
 
+	[Serializable]
     public class DataResult {
 
         public List<string> ColumnNames;
